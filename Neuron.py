@@ -83,35 +83,3 @@ class Neuron(object):
                     g_K*(self.V - self.E_K) - 
                     g_l*(self.V- self.E_l)) / self.Cm * dT
         return self.V
-
-## Simulate Model
-"""
-for i in range(1,len(time)):
-    g_Na = gbar_Na*(m**3)*h
-    g_K  = gbar_K*(n**4)
-    g_l  = gbar_l
-
-    m += dt*(alpha_mv(Vm[i-1])*(1 - m) - beta_m(Vm[i-1])*m)
-    h += dt*(alpha_h(Vm[i-1])*(1 - h) - beta_h(Vm[i-1])*h)
-    n += dt*(alpha_nv(Vm[i-1])*(1 - n) - beta_n(Vm[i-1])*n)
-
-  Vm[i] = Vm[i-1] + (I[i-1] - g_Na*(Vm[i-1] - E_Na) - g_K*(Vm[i-1] - E_K) - g_l*(Vm[i-1] - E_l)) / Cm * dt 
-
-"""
-## plot membrane potential trace
-def main(steps=1000, dT=0.025):
-    a = Neuron()
-    V = [a.step(dT) for _ in xrange(steps)]
-    for row in zip(xrange(len(V)), V):
-        print(row)
-    
-"""
-    figure()
-    plot(time, Vm, time, -30+I)
-    title('Hodgkin-Huxley Example')
-    ylabel('Membrane Potential (mV)')
-    xlabel('Time (msec)')
-    show()
-"""
-if __name__ == "__main__":
-    main(*sys.argv[1:])

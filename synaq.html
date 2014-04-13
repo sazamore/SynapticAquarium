@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <head>
-<title>Boilerplate Title</title>
+<title>HELLO? YES THIS IS WEBPAGE!</title>
 <script src="https://code.jquery.com/jquery-2.1.0.min.js"></script>
 <script src="http://cdnjs.cloudflare.com/ajax/libs/dygraph/1.0.1/dygraph-combined.js"></script>
 <script type="text/javascript">
@@ -10,24 +10,98 @@ window.requestAnimationFrame =
     window.mozRequestAnimationFrame ||  
     window.webkitRequestAnimationFrame || 
     window.msRequestAnimationFrame;
+
 window.URL = window.URL ||
              window.webkitURL
+
 $(document).ready(function(e) {
     var $graph = $("#graph");
-    var g = new Dygraph($graph[0], "/synaq/", {"width": "100%"});
+    var dataUrl = "/synaq/"
+    var g = new Dygraph($graph[0], dataUrl, {
+        "width": "100%",
+        "xlabel": "Time(ms)",
+        "ylabel": "Potential(mV)"
+    });
+
+    $("#go").on("click", function(e) {
+        var paramMap = {};
+        $("#params input").each(function(key, elem) {
+            var val = $(elem).val();
+            if (val !== "") {
+                paramMap[$(elem).attr('id')] = val;
+            }
+        });
+        console.log(paramMap);
+        $.get(dataUrl, paramMap, function(data) {
+            console.log("Got data", data);
+            g.updateOptions({"file": data});
+        });
+    });
 });
 $(document)
 </script>
 </head>
 <style type="text/css">
 body {
-    background-color: #333333;
+    background-color: #333;
+    color: red;
+    font-family: monospace;
 }
 #graph {
     width: 100%;
 }
+input {
+    background-color: #333;
+    border: 2px solid red;
+    font-family: monospace;
+    color: red;
+}
+button {
+    background-color: #333;
+    border: 2px solid red;
+    font-family: monospace;
+    color: red;
+}
 </style>
 <body>
 <div id="graph"></div>
+<div id="params">
+    <table>
+        <tr>
+            <td>dT</td><td><input id="dT" /></td>
+        </tr>
+        <tr>
+            <td>steps</td><td><input id="steps" /></td>
+        </tr>
+        <tr>
+            <td>V_zero</td><td><input id="V_zero" /></td>
+        </tr>
+        <tr>
+            <td>Cm</td><td><input id="Cm" /></td>
+        </tr>
+        <tr>
+            <td>gbar_Na</td><td><input id="gbar_Na" /></td>
+        </tr>
+        <tr>
+            <td>gbar_K</td><td><input id="gbar_K" /></td>
+        </tr>
+        <tr>
+            <td>gbar_l</td><td><input id="gbar_l" /></td>
+        </tr>
+        <tr>
+            <td>E_Na</td><td><input id="E_Na" /></td>
+        </tr>
+        <tr>
+            <td>E_K</td><td><input id="E_K" /></td>
+        </tr>
+        <tr>
+            <td>E_l</td><td><input id="E_l" /></td>
+        </tr>
+        <tr>
+            <td>I</td><td><input id="I" /></td>
+        </tr>
+    </table>
+</div>
+<button id="go">Make it go</button>
 </body>
 </html>
