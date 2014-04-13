@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<head>
+<title>Boilerplate Title</title>
+<script src="https://code.jquery.com/jquery-2.1.0.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/dygraph/1.0.1/dygraph-combined.js"></script>
+<script type="text/javascript">
+"use strict";
+window.requestAnimationFrame = 
+    window.requestAnimationFrame || 
+    window.mozRequestAnimationFrame ||  
+    window.webkitRequestAnimationFrame || 
+    window.msRequestAnimationFrame;
+window.URL = window.URL ||
+             window.webkitURL
+$(document).ready(function(e) {
+    var $graph = $("#graph");
+    var g = new Dygraph($graph[0], "/synaq/", {"width": "100%"});
+});
+$(document)
+</script>
+</head>
+<style type="text/css">
+body {
+    background-color: #333333;
+}
+#graph {
+    width: 100%;
+}
+</style>
+<body>
+<div id="graph"></div>
+</body>
+</html>

@@ -40,10 +40,9 @@ class Neuron(object):
         self,
         ### channel activity ###
         ## setup parameters and state variables
-        T     = 55,     # ms
-
         ## HH Parameters
         V_zero  = -10,    # mV
+        I       = 0,      # IDKLOL
         Cm      = 1,      # uF/cm2
         gbar_Na = 120,    # mS/cm2
         gbar_K  = 36,     # mS/cm2
@@ -51,27 +50,22 @@ class Neuron(object):
         E_Na    = 115,    # mV
         E_K     = -12,    # mV
         E_l     = 10.613):# mV
-        self.T      = T
 
         ## HH Parameters
-        self.V_zero  = V_zero
-        self.Cm      = Cm
-        self.gbar_Na = gbar_Na    
-        self.gbar_K  = gbar_K
-        self.gbar_l  = gbar_l
-        self.E_Na    = E_Na
-        self.E_K     = E_K
-        self.E_l     = E_l
-
-        #Vm      = zeros(len(time)) # mV
-        #Vm[0]   = V_zero
-        self.V       = V_zero
-        self.m       = self.alpha_m(V_zero)/(self.alpha_m(V_zero) + self.beta_m(V_zero))
-        self.n       = self.alpha_n(V_zero)/(self.alpha_n(V_zero) + self.beta_n(V_zero))
-        self.h       = self.alpha_h(V_zero)/(self.alpha_h(V_zero) + self.beta_h(V_zero))
-        #self.time    = arange(0,T+dt,dt)
-        ## Stimulus
-        self.I = 0
+        self.V_zero = V_zero
+        self.Cm     = Cm
+        self.gbar_Na= gbar_Na    
+        self.gbar_K = gbar_K
+        self.gbar_l = gbar_l
+        self.E_Na   = E_Na
+        self.E_K    = E_K
+        self.E_l    = E_l
+        self.I      = I
+        # Initial Conditions
+        self.V      = V_zero
+        self.m      = self.alpha_m(V_zero)/(self.alpha_m(V_zero) + self.beta_m(V_zero))
+        self.n      = self.alpha_n(V_zero)/(self.alpha_n(V_zero) + self.beta_n(V_zero))
+        self.h      = self.alpha_h(V_zero)/(self.alpha_h(V_zero) + self.beta_h(V_zero))
 
     def __str__(self):
         return "HH Neuron: m: \t%r\tn:%r\th:\t%r\tV:\t%r" % (
@@ -89,10 +83,6 @@ class Neuron(object):
                     g_K*(self.V - self.E_K) - 
                     g_l*(self.V- self.E_l)) / self.Cm * dT
         return self.V
-        
-
-        #Vm[i] = Vm[i-1] + (I[i-1] - g_Na*(Vm[i-1] - E_Na) - g_K*(Vm[i-1] - E_K) - g_l*(Vm[i-1] - E_l)) / Cm * dt 
-        
 
 ## Simulate Model
 """
@@ -112,7 +102,8 @@ for i in range(1,len(time)):
 def main(steps=1000, dT=0.025):
     a = Neuron()
     V = [a.step(dT) for _ in xrange(steps)]
-    print V
+    for row in zip(xrange(len(V)), V):
+        print(row)
     
 """
     figure()
