@@ -11,6 +11,7 @@ def main(steps=1000, dT=.025, output=sys.stdout, **kwargs):
     """Serve doesn't do anything here, but filters the arg out for Neuron()"""
     print("Iterating %d steps, %fms/step" % (steps, dT))
     a = Neuron(**kwargs)
+    b = Neuron(I=15);
     V = [a.step(dT) for _ in xrange(steps)]
     writer = csv.writer(output)
     writer.writerow(["T", "V"])
@@ -39,7 +40,7 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             key : try_parse(val[0]) if len(val) == 1 else val
             for key, val in urlparse.parse_qs(res.query).iteritems()
         }
-        print "got a GET request for %r, params %r" % (res, params)
+        print("got a GET request for %r, params %r" % (res, params))
         path = res.path.split("/")
         
         writer = csv.writer(self.wfile)
@@ -47,11 +48,11 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_header('Content-Type', "text/plain")
         self.end_headers()
         main(output=self.wfile, **params)
-        print "Finished request for %s" % self.path
+        print("Finished request for %s" % self.path)
         
     def do_POST(self):
-        print "got a POST request"
-        print self.rfile.read()
+        print("got a POST request")
+        print(self.rfile.read())
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate a neuron")
@@ -69,6 +70,7 @@ if __name__ == "__main__":
     parser.add_argument(      '--E_Na',                     metavar="mV",       type=float, action="store")
     parser.add_argument(      '--E_K',                      metavar="mV",       type=float, action="store")
     parser.add_argument(      '--E_l',                      metavar="mV",       type=float, action="store")
+    parser.add_argument(      '--I',                        metavar="mA",       type=float, action="store")
     args = parser.parse_args()
     if args.serve:
         server = BaseHTTPServer.HTTPServer(('', 3103), SARequestHandler)
