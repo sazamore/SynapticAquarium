@@ -16,14 +16,10 @@ window.URL = window.URL ||
 
 $(document).ready(function(e) {
     var $graph = $("#graph");
-    var dataUrl = "/synaq/"
-    var g = new Dygraph($graph[0], dataUrl, {
-        "width": "100%",
-        "xlabel": "Time(ms)",
-        "ylabel": "Potential(mV)"
-    });
-
-    $("#go").on("click", function(e) {
+    var neurons = {};
+    var dygraph;
+    var data = [];
+    $("#create").on("click", function(e) {
         var paramMap = {};
         $("#params input").each(function(key, elem) {
             var val = $(elem).val();
@@ -32,10 +28,28 @@ $(document).ready(function(e) {
             }
         });
         console.log(paramMap);
-        $.get(dataUrl, paramMap, function(data) {
-            console.log("Got data", data);
-            g.updateOptions({"file": data});
-        });
+        $.get("/synaq/new/", paramMap, function(name) {
+            $('#neurons').append('<tr><td>' + name + '</td></tr>');
+        })
+    });
+    $("#step").on('click', function(e) {
+        $.get("/synaq/step/", {"steps": 20}, function(V) {
+            for (var i = 0; i < V.length; i++) {
+                data.push(V[i]);
+            }
+            if (dygraph === undefined) {
+                console.log("Dygraphing", data, "into", $graph[0]);
+                dygraph = Dygraph($graph[0], 
+                    data, {
+                    "width": "100%",
+                    "xlabel": "Time(ms)",
+                    "ylabel": "Potential(mV)",
+                    "labels": ['T', 'A']
+                });
+            } else {
+                dygraph.updateOptions({"data": data});
+            }
+        }, 'json');
     });
 });
 $(document)
@@ -47,7 +61,7 @@ body {
     color: red;
     font-family: monospace;
 }
-#graph {
+.graph {
     width: 100%;
 }
 input {
@@ -102,6 +116,9 @@ button {
         </tr>
     </table>
 </div>
-<button id="go">Make it go</button>
+<button id="create">Add a Neuron!</button>
+<button id="step">Step!</button>
+<table id="neurons">
+</table>
 </body>
 </html>
