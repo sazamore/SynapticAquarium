@@ -8,6 +8,7 @@ import BaseHTTPServer
 import urlparse
 import uuid
 import json
+import time
 
 def main(steps=1000, dT=.025, output=sys.stdout, **kwargs):
     """Serve doesn't do anything here, but filters the arg out for Neuron()"""
@@ -30,7 +31,8 @@ def try_parse(thing):
         pass
     return thing
 
-model = None
+models = {} # Map of keys to model instances
+gargs = None # global arguments (from cmdline)
 
 class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """
@@ -38,7 +40,7 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     You should probably not deploy this on the actual internet.
     """
     def do_GET(self):
-        global model
+        global models, gargs
         res = urlparse.urlparse(self.path)
         params = { # urlparse passes EVERYTHING back as a list, this extracts singletons.
             key : try_parse(val[0]) if len(val) == 1 else val
@@ -50,6 +52,9 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', "text/plain")
         self.end_headers()
+        model = models[params['model_id']] if 'model_id' in params else None
+        if model:
+            del params['model_id']
         if path[0] == 'one':
             writer = csv.writer(self.wfile)
             main(output=self.wfile, **params)
@@ -59,9 +64,18 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             print "Added %s" % k
         elif path[0] == 'step':
             print "Attempting to iterate %r steps" % params['steps']
+            stime = time.clock()
             V = [model.step() for step in range(params['steps'])]
+            print "Calculation in %fs" % (time.clock() - stime)
             json.dump(V, self.wfile)
+            print "Whole step in %fs" % (time.clock() - stime)
             print "Stepped"
+        elif path[0] == 'reset':
+            # Create a new model and add it to models
+            nu = str(uuid.uuid4())
+            models[nu] = Model(params['dT'] if 'dT' in params else gargs.dT)
+            self.wfile.write(nu)
+            print "Created %s" % nu
         print("Finished request for %r" % path)
 
     def do_POST(self):
@@ -85,12 +99,11 @@ if __name__ == "__main__":
     parser.add_argument(      '--E_K',                      metavar="mV",       type=float, action="store")
     parser.add_argument(      '--E_l',                      metavar="mV",       type=float, action="store")
     parser.add_argument(      '--I',                        metavar="mA?",      type=float, action="store")
-    args = parser.parse_args()
-    if args.serve:
-        model = Model(args.dT)
+    gargs = parser.parse_args()
+    if gargs.serve:
         server = BaseHTTPServer.HTTPServer(('', 3103), SARequestHandler)
         print "Giving up control flow!"
         server.serve_forever()
     else:
-        kwargs = {k:v for k, v in vars(args).items() if v is not None and k is not 'serve'}
+        kwargs = {k:v for k, v in vars(gargs).items() if v is not None and k is not 'serve'}
         main(**kwargs)

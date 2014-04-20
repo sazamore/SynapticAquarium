@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <head>
-<title>HELLO? YES THIS IS WEBPAGE!</title>
+<title>MEANWHILE, AT WEBPAGE...</title>
 <script src="https://code.jquery.com/jquery-2.1.0.min.js"></script>
 <script src="http://cdnjs.cloudflare.com/ajax/libs/dygraph/1.0.1/dygraph-combined.js"></script>
 <script type="text/javascript">
@@ -14,13 +14,16 @@ window.requestAnimationFrame =
 window.URL = window.URL ||
              window.webkitURL
 
+var model_id = null;
 $(document).ready(function(e) {
     var $graph = $("#graph");
-    var neurons = {};
     var dygraph;
     var data = [];
+    var curNeurons = 0; // Number of neurons currently grphed
+    var labels = ['V'];
+    var marching = false;
     $("#create").on("click", function(e) {
-        var paramMap = {};
+        var paramMap = {"model_id": model_id};
         $("#params input").each(function(key, elem) {
             var val = $(elem).val();
             if (val !== "") {
@@ -31,25 +34,53 @@ $(document).ready(function(e) {
         $.get("/synaq/new/", paramMap, function(name) {
             $('#neurons').append('<tr><td>' + name + '</td></tr>');
         })
+        labels.push(name);
     });
-    $("#step").on('click', function(e) {
-        $.get("/synaq/step/", {"steps": 20}, function(V) {
-            for (var i = 0; i < V.length; i++) {
-                data.push(V[i]);
-            }
+    $("#step").on('click', function recurse (e) {
+        $.get("/synaq/step/", { // Get some data
+                "steps": (dygraph === undefined ? 1000 : 5),
+                "model_id": model_id
+             }, function(V) {
             if (dygraph === undefined) {
-                console.log("Dygraphing", data, "into", $graph[0]);
-                dygraph = Dygraph($graph[0], 
+                data = V;
+                console.log("Dygraphing", data, "into", $graph[0], Dygraph);
+                dygraph = new Dygraph(document.getElementById('graph'), 
                     data, {
+                    "valueRange": [-50, 150],
                     "width": "100%",
                     "xlabel": "Time(ms)",
                     "ylabel": "Potential(mV)",
-                    "labels": ['T', 'A']
+                    "labels": labels
                 });
             } else {
+                for (var i = 0; i < V.length; i++) {
+                    data.push(V[i]);
+                    data.shift();
+                }
                 dygraph.updateOptions({"data": data});
             }
+            if (marching) {
+                recurse();
+            }
         }, 'json');
+    });
+    $("#march").on('click', function(e) {
+        marching = !marching;
+        if (marching) {
+            $('#step').click();
+        }
+    });
+    $("#reset").on('click', function(e) {
+        $.get("/synaq/reset", function(response) {
+            $("#graph").empty();
+            $("#neurons").empty();
+            dygraph = undefined;
+            labels = ['T'];
+            data = [];
+            model_id = response;
+            $('#model_id').text(model_id);
+            console.log("Got new ID", response);
+        }, 'text');
     });
 });
 $(document)
@@ -61,8 +92,9 @@ body {
     color: red;
     font-family: monospace;
 }
-.graph {
-    width: 100%;
+#graph {
+    width: 50%;
+    height: 300px;
 }
 input {
     background-color: #333;
@@ -118,7 +150,10 @@ button {
 </div>
 <button id="create">Add a Neuron!</button>
 <button id="step">Step!</button>
+<button id="march">March!</button>
+<button id="reset">Reset!</button>
 <table id="neurons">
 </table>
+<div id="model_id"></div>
 </body>
 </html>
