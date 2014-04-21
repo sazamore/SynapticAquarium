@@ -59,6 +59,10 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             writer = csv.writer(self.wfile)
             main(output=self.wfile, **params)
         elif path[0] == 'new':
+            if 'steps' in params:
+               del params['steps']
+            if 'dT' in params:
+               del params['dT']
             k, n = model.add(**params)
             self.wfile.write(k)
             print "Added %s" % k
@@ -70,12 +74,22 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             json.dump(V, self.wfile)
             print "Whole step in %fs" % (time.clock() - stime)
             print "Stepped"
+        elif path[0] == 'connect':
+            model.connect(**params)
         elif path[0] == 'reset':
             # Create a new model and add it to models
             nu = str(uuid.uuid4())
             models[nu] = Model(params['dT'] if 'dT' in params else gargs.dT)
             self.wfile.write(nu)
             print "Created %s" % nu
+        elif path[0] == 'graph':
+            v, e = model.graph()
+            g = {"neurons": v,
+                 "edges": e };
+            json.dump(g, self.wfile)
+            print "Dumping", repr(g)
+        else:
+            print "GOT NONEXISTANT PAGE"
         print("Finished request for %r" % path)
 
     def do_POST(self):

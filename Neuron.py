@@ -18,6 +18,7 @@ ZO RELAXEN UND WATSCHEN DER BLINKENLICHTEN.
 
 import numpy as np
 import scipy as sp
+import random
 import sys
 import uuid
 
@@ -30,15 +31,15 @@ class Model(object):
         self._t = 0.
     def add(self, **kwargs):
         n = Neuron(**kwargs)
-        k = uuid.uuid4()
+        k = str(uuid.uuid4())
         self._neurons[k] = n
         self._key_order.append(k)
         return (k, n)
     def header(self):
         return self._key_order;
     def connect(self, prekey, postkey, weight):
-        s = Synapse(self._neurons[prekey], self._neurons[postkey])
-        self._synapses.append(s)
+        s = Synapse(self._neurons[prekey], self._neurons[postkey], weight=weight)
+        self._synapses.append((s, prekey, postkey))
         return s
     def step(self):
         v = [self._t]
@@ -46,15 +47,19 @@ class Model(object):
         for k in self._key_order:
             v.append(self._neurons[k].step(self._dT))
         return v
-
+    def graph(self): # Serialize the model
+        neurons = {k: n.params() for (k, n) in self._neurons.items()}
+        edges = [(prekey, postkey, s.weight) for s, prekey, postkey in self._synapses]
+        return (neurons, edges)
+        
 class Synapse(object):
     def __init__(self, pre, post, weight=None):
-        self.weight = weight if weight is None else np.ranf()
+        self.weight = random.random() if weight is None else weight
         self.pre = pre
-        self.post.inputs.append(self)
-    def transfer(self):
+        post.inputs.append(self)
+    def output(self):
         "Effect on postsynaptic current"
-        return pre.history[-1].V * self.weight
+        return self.pre.history[-1].V * self.weight
 
 class Neuron(object):
     def alpha_n(self,v):
@@ -117,9 +122,21 @@ class Neuron(object):
     def __str__(self):
         return "HH Neuron: m: \t%r\tn:%r\th:\t%r\tV:\t%r" % (
                self.m, self.n, self.h, self.V)
+    def params(self): # return a dict such that you can pass it as kwargs to the constructor
+        return  {
+            'V_zero':   self.V_zero,
+            'Cm':       self.Cm,
+            'gbar_Na':  self.gbar_Na,
+            'gbar_K':   self.gbar_K,
+            'gbar_l':   self.gbar_l,
+            'E_Na':     self.E_Na,
+            'E_K':      self.E_K,
+            'E_l':      self.E_l,
+            'I':        self.I
+        }
     def step(self, dT):
         "Step the model by dT. Strange things may happen if you vary dT"
-        self.I = sum([i.transfer() for i in self.inputs])
+        self.I = sum([i.output() for i in self.inputs])
 
         self.m += dT*(self.alpha_m(self.V)*(1 - self.m) - self.beta_m(self.V)*self.m)
         self.h += dT*(self.alpha_h(self.V)*(1 - self.h) - self.beta_h(self.V)*self.h)

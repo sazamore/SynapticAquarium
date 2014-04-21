@@ -14,62 +14,20 @@ window.requestAnimationFrame =
 window.URL = window.URL ||
              window.webkitURL
 
-var model_id = null;
 $(document).ready(function(e) {
+    
     var $graph = $("#graph");
     var dygraph;
     var data = [];
     var curNeurons = 0; // Number of neurons currently grphed
     var labels = ['V'];
     var marching = false;
-    $("#create").on("click", function(e) {
-        var paramMap = {"model_id": model_id};
-        $("#params input").each(function(key, elem) {
-            var val = $(elem).val();
-            if (val !== "") {
-                paramMap[$(elem).attr('id')] = val;
-            }
-        });
-        console.log(paramMap);
-        $.get("/synaq/new/", paramMap, function(name) {
-            $('#neurons').append('<tr><td>' + name + '</td></tr>');
-        })
+    $('#model_id').val(""); // Clear cache
+    var addNeuron = function(name) {
+        $('#neurons').append('<tr><td class="neuron">' + name + '</td></tr>');
         labels.push(name);
-    });
-    $("#step").on('click', function recurse (e) {
-        $.get("/synaq/step/", { // Get some data
-                "steps": (dygraph === undefined ? 1000 : 5),
-                "model_id": model_id
-             }, function(V) {
-            if (dygraph === undefined) {
-                data = V;
-                console.log("Dygraphing", data, "into", $graph[0], Dygraph);
-                dygraph = new Dygraph(document.getElementById('graph'), 
-                    data, {
-                    "valueRange": [-50, 150],
-                    "width": "100%",
-                    "xlabel": "Time(ms)",
-                    "ylabel": "Potential(mV)",
-                    "labels": labels
-                });
-            } else {
-                for (var i = 0; i < V.length; i++) {
-                    data.push(V[i]);
-                    data.shift();
-                }
-                dygraph.updateOptions({"data": data});
-            }
-            if (marching) {
-                recurse();
-            }
-        }, 'json');
-    });
-    $("#march").on('click', function(e) {
-        marching = !marching;
-        if (marching) {
-            $('#step').click();
-        }
-    });
+    }
+    // Ger a new model and set it to #model_id
     $("#reset").on('click', function(e) {
         $.get("/synaq/reset", function(response) {
             $("#graph").empty();
@@ -77,11 +35,97 @@ $(document).ready(function(e) {
             dygraph = undefined;
             labels = ['T'];
             data = [];
-            model_id = response;
-            $('#model_id').text(model_id);
+            $('#model_id').val(response);
             console.log("Got new ID", response);
         }, 'text');
     });
+    // Restart the graph and load neurons from #model_id
+    $("#download").on('click', function(e) {
+        $.get("/synaq/graph", {'model_id': $('#model_id').val()}, function(response) {
+            console.log(response);
+            Object.keys(response.neurons).forEach(function(k) {
+                addNeuron(k);
+            });;
+        }, 'json');
+    });
+    // Add a neuron
+    $("#create").on("click", function(e) {
+        var paramMap = {"model_id": $('#model_id').val()};
+        $("#params input").each(function(key, elem) {
+            var val = $(elem).val();
+            if (val !== "") {
+                paramMap[$(elem).attr('id')] = val;
+            }
+        });
+        console.log(paramMap);
+        $.get("/synaq/new/", paramMap, addNeuron)
+    });
+    // Reset the graph and request a full view worth of samples
+    $("#clear").on('click', function(e) {
+        $.get("/synaq/step/", { // Get some data
+                "steps": 3000,
+                "model_id": $("#model_id").val() || 5
+             }, function(V) {
+            data = V;
+            console.log("Dygraphing", data, "into", $graph[0]);
+            $('#graph').empty();
+            dygraph = new Dygraph(document.getElementById('graph'), data, {
+                "valueRange": [-50, 150],
+                "width": "100%",
+                "xlabel": "Time(ms)",
+                "ylabel": "Potential(mV)",
+                "labels": labels
+                });
+        }, 'json');
+    });
+    // Get a few more steps and push them onto the graph
+    $("#step").on('click', function recurse (e) {
+        $.get("/synaq/step/", { // Get some data
+                "steps": $('#steps').val(),
+                "model_id": $("#model_id").val()
+             }, function(V) {
+            for (var i = 0; i < V.length; i++) {
+                data.push(V[i]);
+                data.shift();
+            }
+            dygraph.updateOptions({"data": data});
+            if (marching) {
+                recurse();
+            }
+        }, 'json');
+    });
+    // Step continually
+    $("#march").on('click', function(e) {
+        marching = !marching;
+        if (marching) {
+            $('#step').click();
+        }
+    });
+    $('#neurons').on('mousedown', '.neuron', function(e) {
+        var $that = $(this)
+        var startk = $that.text();
+        $that.addClass('from');
+        console.log("Mousedown on neuron", startk);
+        $('#neurons td').css({"cursor": "crosshair"});
+        $('#neurons').on('mouseup', '.neuron', function(e) {
+            var $that2 = $(this)
+            var endk = $that2.text();
+            $that2.addClass('to');
+            $('#neurons td').css({"cursor": "pointer"});
+            $('#neurons').off('mouseup', '.neuron');
+            console.log("connecting", startk, "to",  endk);
+            $.get("/synaq/connect", {
+                    'model_id': $('#model_id').val(), 
+                    'prekey':   startk,
+                    'postkey':  endk, 
+                    'weight':   $('#weight').val()
+                }, function(response) {
+                console.log('Connected', startk, 'to', endk, 'got', response);
+                $that2.removeClass('to');
+                $that.removeClass('from');
+            });
+        });
+    })
 });
 $(document)
 </script>
@@ -108,16 +152,55 @@ button {
     font-family: monospace;
     color: red;
 }
+#controls {
+    border-top: 1px solid red;
+    border-bottom: 1px solid red;
+    padding: 0.5em;
+}
+#connectparams {
+    border-top: 1px solid red;
+    border-bottom: 1px solid red;
+}
+#neurons td {
+    border: 1px solid red;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    cursor: pointer;
+}
+#neurons .from {
+    color: green;
+}
+#neurons .to {
+    color: blue;
+}
 </style>
 <body>
+model id: <input id="model_id" value="" style="width: 53ex"><br />
 <div id="graph"></div>
+<div id="controls">
+    [ <button id="reset">Reset!</button> | 
+    <button id="download">Download!</button> ] 
+    [ <button id="create">Create!</button> | Connect! ] +
+    <button id="clear">Clear!</button>
+    <button id="step">Step!</button> +
+    <button id="march">March!</button> 
+</div>
 <div id="params">
     <table>
         <tr>
             <td>dT</td><td><input id="dT" /></td>
+            <td>Integration step period. Only used with 'Reset'</td>
         </tr>
         <tr>
-            <td>steps</td><td><input id="steps" /></td>
+            <td>steps</td><td><input id="steps" value="10" /></td>
+            <td>Number of integration steps per graph update. Only used with 'Step'</td>
+        </tr>
+        <tr>
+            <td colspan=3>HH Parameters, only used with 'Create':</td>
         </tr>
         <tr>
             <td>V_zero</td><td><input id="V_zero" /></td>
@@ -145,15 +228,14 @@ button {
         </tr>
         <tr>
             <td>I</td><td><input id="I" /></td>
+            <td>Current input</td>
         </tr>
     </table>
 </div>
-<button id="create">Add a Neuron!</button>
-<button id="step">Step!</button>
-<button id="march">March!</button>
-<button id="reset">Reset!</button>
+<div id="connectparams">
+weight: <input id="weight" value="0.5" />Click and drag between 2 neurons below to connect them. <span id="createfirst">(But create some first!)</span><br />
+</div>
 <table id="neurons">
 </table>
-<div id="model_id"></div>
 </body>
 </html>
