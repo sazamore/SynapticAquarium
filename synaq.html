@@ -29,7 +29,7 @@ $(document).ready(function(e) {
     }
     // Ger a new model and set it to #model_id
     $("#reset").on('click', function(e) {
-        $.get("/synaq/reset", function(response) {
+        $.get("./reset", function(response) {
             $("#graph").empty();
             $("#neurons").empty();
             dygraph = undefined;
@@ -41,7 +41,7 @@ $(document).ready(function(e) {
     });
     // Restart the graph and load neurons from #model_id
     $("#download").on('click', function(e) {
-        $.get("/synaq/graph", {'model_id': $('#model_id').val()}, function(response) {
+        $.get("./graph", {'model_id': $('#model_id').val()}, function(response) {
             console.log(response);
             Object.keys(response.neurons).forEach(function(k) {
                 addNeuron(k);
@@ -58,11 +58,11 @@ $(document).ready(function(e) {
             }
         });
         console.log(paramMap);
-        $.get("/synaq/new/", paramMap, addNeuron)
+        $.post("./new/", paramMap, addNeuron)
     });
     // Reset the graph and request a full view worth of samples
     $("#clear").on('click', function(e) {
-        $.get("/synaq/step/", { // Get some data
+        $.get("./step/", { // Get some data
                 "steps": 3000,
                 "model_id": $("#model_id").val() || 5
              }, function(V) {
@@ -80,7 +80,7 @@ $(document).ready(function(e) {
     });
     // Get a few more steps and push them onto the graph
     $("#step").on('click', function recurse (e) {
-        $.get("/synaq/step/", { // Get some data
+        $.get("./step/", { // Get some data
                 "steps": $('#steps').val(),
                 "model_id": $("#model_id").val()
              }, function(V) {
@@ -114,7 +114,7 @@ $(document).ready(function(e) {
             $('#neurons td').css({"cursor": "pointer"});
             $('#neurons').off('mouseup', '.neuron');
             console.log("connecting", startk, "to",  endk);
-            $.get("/synaq/connect", {
+            $.get("./connect", {
                     'model_id': $('#model_id').val(), 
                     'prekey':   startk,
                     'postkey':  endk, 
@@ -127,7 +127,6 @@ $(document).ready(function(e) {
         });
     })
 });
-$(document)
 </script>
 </head>
 <style type="text/css">

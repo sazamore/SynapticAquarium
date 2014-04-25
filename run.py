@@ -39,26 +39,28 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     Calls main() with output=(request wfile), and **kwargs=GET/POST parameters.
     You should probably not deploy this on the actual internet.
     """
-    def do_GET(self):
+    def do_req(self, path, params):
         global models, gargs
-        res = urlparse.urlparse(self.path)
-        params = { # urlparse passes EVERYTHING back as a list, this extracts singletons.
-            key : try_parse(val[0]) if len(val) == 1 else val
-            for key, val in urlparse.parse_qs(res.query).iteritems()
-        }
-        print("got a GET request for %r, params %r" % (res, params))
-        # Empty strings are lame
-        path = [pe for pe in res.path.strip().split("/") if pe is not ""]
-        self.send_response(200)
-        self.send_header('Content-Type', "text/plain")
-        self.end_headers()
+        print("got a GET request for %r, params %r" % (path, params))
         model = models[params['model_id']] if 'model_id' in params else None
         if model:
             del params['model_id']
-        if path[0] == 'one':
+        # routing
+        if not path:
+            self.send_response(200)
+            self.send_header('Content-Type', "text/html")
+            self.end_headers()
+            self.wfile.write(open("./synaq.html", 'r').read())
+        elif path[0] == 'one':
+            self.send_response(200)
+            self.send_header('Content-Type', "text/plain")
+            self.end_headers()
             writer = csv.writer(self.wfile)
             main(output=self.wfile, **params)
         elif path[0] == 'new':
+            self.send_response(200)
+            self.send_header('Content-Type', "text/plain")
+            self.end_headers()
             if 'steps' in params:
                del params['steps']
             if 'dT' in params:
@@ -67,34 +69,64 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.wfile.write(k)
             print "Added %s" % k
         elif path[0] == 'step':
-            print "Attempting to iterate %r steps" % params['steps']
+            self.send_response(200)
+            self.send_header('Content-Type', "application/json")
+            self.end_headers()
+            #print "Attempting to iterate %r steps" % params['steps']
             stime = time.clock()
             V = [model.step() for step in range(params['steps'])]
             print "Calculation in %fs" % (time.clock() - stime)
             json.dump(V, self.wfile)
-            print "Whole step in %fs" % (time.clock() - stime)
-            print "Stepped"
         elif path[0] == 'connect':
+            self.send_response(200)
+            self.send_header('Content-Type', "text/plain")
+            self.end_headers()
             model.connect(**params)
         elif path[0] == 'reset':
+            self.send_response(200)
+            self.send_header('Content-Type', "text/plain")
+            self.end_headers()
             # Create a new model and add it to models
             nu = str(uuid.uuid4())
             models[nu] = Model(params['dT'] if 'dT' in params else gargs.dT)
             self.wfile.write(nu)
             print "Created %s" % nu
         elif path[0] == 'graph':
+            self.send_response(200)
+            self.send_header('Content-Type', "application/json")
+            self.end_headers()
             v, e = model.graph()
             g = {"neurons": v,
                  "edges": e };
             json.dump(g, self.wfile)
             print "Dumping", repr(g)
         else:
-            print "GOT NONEXISTANT PAGE"
-        print("Finished request for %r" % path)
-
+            self.send_response(404)
+            self.send_header('Content-Type', "text/plain")
+            self.end_headers()
+            self.wfile.write("nope")
+            print "GOT NONEXISTANT PAGE %r" % path
+        
+    def do_GET(self):
+        global models, gargs
+        res = urlparse.urlparse(self.path)
+        params = { # urlparse passes EVERYTHING back as a list, this extracts singletons.
+            key : try_parse(val[0]) if len(val) == 1 else val
+            for key, val in urlparse.parse_qs(res.query).iteritems()
+        }
+        # Empty strings are lame
+        path = [pe for pe in res.path.strip().split("/") if pe is not ""]
+        self.do_req(path, params)
     def do_POST(self):
-        print("got a POST request")
-        print(self.rfile.read())
+        # Empty strings are lame
+        path = [pe for pe in self.path.strip().split("/") if pe is not ""]
+        reqf = self.rfile.read(int(self.headers['Content-Length']))
+        params = { # urlparse passes EVERYTHING back as a list, this extracts singletons.
+            key : try_parse(val[0]) if len(val) == 1 else val
+            for key, val in urlparse.parse_qs(reqf).iteritems()
+        }
+        self.do_req(path, params)
+        
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate a neuron")
@@ -116,7 +148,7 @@ if __name__ == "__main__":
     gargs = parser.parse_args()
     if gargs.serve:
         server = BaseHTTPServer.HTTPServer(('', 3103), SARequestHandler)
-        print "Giving up control flow!"
+        print "Serving on port 3103!"
         server.serve_forever()
     else:
         kwargs = {k:v for k, v in vars(gargs).items() if v is not None and k is not 'serve'}
