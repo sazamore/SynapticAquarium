@@ -10,15 +10,6 @@ import uuid
 import json
 import time
 
-def main(steps=1000, dT=.025, output=sys.stdout, **kwargs):
-    """Serve doesn't do anything here, but filters the arg out for Neuron()"""
-    print("Iterating %d steps, %fms/step" % (steps, dT))
-    a = Neuron(**kwargs)
-    b = Neuron(I=15);
-    V = [a.step(dT) for _ in xrange(steps)]
-    writer = csv.writer(output)
-    writer.writerows(zip((i * dT for i in xrange(len(V))), V))
-
 def try_parse(thing):
     "Attempt to parse a string into an int or float. If we can't just return it"
     try:
@@ -51,12 +42,6 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_header('Content-Type', "text/html")
             self.end_headers()
             self.wfile.write(open("./synaq.html", 'r').read())
-        elif path[0] == 'one':
-            self.send_response(200)
-            self.send_header('Content-Type', "text/plain")
-            self.end_headers()
-            writer = csv.writer(self.wfile)
-            main(output=self.wfile, **params)
         elif path[0] == 'new':
             self.send_response(200)
             self.send_header('Content-Type', "text/plain")
@@ -108,6 +93,7 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             print "GOT NONEXISTANT PAGE %r" % path
         
     def do_GET(self):
+        "Translate a GET request into path and a parameter map"
         global models, gargs
         res = urlparse.urlparse(self.path)
         params = { # urlparse passes EVERYTHING back as a list, this extracts singletons.
@@ -118,7 +104,7 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         path = [pe for pe in res.path.strip().split("/") if pe is not ""]
         self.do_req(path, params)
     def do_POST(self):
-        # Empty strings are lame
+        "Translate a POST request into path and a parameter map"
         path = [pe for pe in self.path.strip().split("/") if pe is not ""]
         reqf = self.rfile.read(int(self.headers['Content-Length']))
         params = { # urlparse passes EVERYTHING back as a list, this extracts singletons.
@@ -130,11 +116,9 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate a neuron")
+    parser.add_argument("-p", '--port',     dest="port",                        type=int,   action="store",     default=3103,       help="Port to serve HTTP on")
     parser.add_argument("-s", '--steps',    dest="steps",   metavar="N",        type=int,   action="store",     default="1000",     help="Number of steps")
     parser.add_argument("-t",               dest="dT",      metavar="ms",       type=float, action="store",     default=.025,       help="Step interval")
-    parser.add_argument("-o",               dest="output",                      type=argparse.FileType(mode='w'),
-                                                                                            action="store",     default=sys.stdout, help="Output CSV file")
-    parser.add_argument("-S",               dest="serve",                                   action="store_true",                    help="Serve over HTTP")
     # Parameter args
     parser.add_argument(      '--V_zero',                   metavar="mV",       type=float, action="store",                         help="Initial V" )
     parser.add_argument(      '--Cm',                       metavar="uF/cm2",   type=float, action="store",                         help="Membrane Capacitance")
@@ -146,10 +130,6 @@ if __name__ == "__main__":
     parser.add_argument(      '--E_l',                      metavar="mV",       type=float, action="store")
     parser.add_argument(      '--I',                        metavar="mA?",      type=float, action="store")
     gargs = parser.parse_args()
-    if gargs.serve:
-        server = BaseHTTPServer.HTTPServer(('', 3103), SARequestHandler)
-        print "Serving on port 3103!"
-        server.serve_forever()
-    else:
-        kwargs = {k:v for k, v in vars(gargs).items() if v is not None and k is not 'serve'}
-        main(**kwargs)
+    server = BaseHTTPServer.HTTPServer(('', gargs.port), SARequestHandler)
+    print "Serving on port %d!" % gargs.port
+    server.serve_forever()
