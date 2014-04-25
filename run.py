@@ -41,7 +41,7 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """
     def do_req(self, path, params):
         global models, gargs
-        print("got a GET request for %r, params %r" % (path, params))
+        #print("got a request for %r, params %r" % (path, params))
         model = models[params['model_id']] if 'model_id' in params else None
         if model:
             del params['model_id']
@@ -75,7 +75,7 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             #print "Attempting to iterate %r steps" % params['steps']
             stime = time.clock()
             V = [model.step() for step in range(params['steps'])]
-            print "Calculation in %fs" % (time.clock() - stime)
+            #print "Calculation in %fs" % (time.clock() - stime)
             json.dump(V, self.wfile)
         elif path[0] == 'connect':
             self.send_response(200)

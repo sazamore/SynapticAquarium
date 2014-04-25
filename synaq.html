@@ -21,11 +21,36 @@ $(document).ready(function(e) {
     var data = [];
     var curNeurons = 0; // Number of neurons currently grphed
     var labels = ['V'];
+    var colors = [];
+    var getColor = function() {
+        var incs = ['0', '5', '9', 'f'];
+        var clist = [];
+        var i = 0;
+        for (var r = 0; r < incs.length; r++) {
+            for (var g = 0; g < incs.length; g++) {
+                for (var b = 0; b < incs.length; b++) {
+                    clist[i] = "#" + incs[r] + incs[g] + incs[b];
+                    i++;
+                }
+            }
+        }
+        // Shuffle the array (lifted from http://jsfromhell.com/array/shuffle)
+        for(var j, x, i = clist.length; i; j = Math.floor(Math.random() * i), x = clist[--i], clist[i] = clist[j], clist[j] = x);
+        i = 0;
+        return function() {
+            var c = clist[i];
+            i++;
+            i = i % clist.length;
+            return c;
+        }
+    }();
     var marching = false;
     $('#model_id').val(""); // Clear cache
     var addNeuron = function(name) {
-        $('#neurons').append('<tr><td class="neuron">' + name + '</td></tr>');
         labels.push(name);
+        var c = getColor();
+        colors.push(c)
+        $('#neurons').append('<tr><td class="neuron" style="color:' + c + '">' + name + '</td></tr>');
     }
     // Ger a new model and set it to #model_id
     $("#reset").on('click', function(e) {
@@ -34,6 +59,7 @@ $(document).ready(function(e) {
             $("#neurons").empty();
             dygraph = undefined;
             labels = ['T'];
+            colors = [];
             data = [];
             $('#model_id').val(response);
             console.log("Got new ID", response);
@@ -42,6 +68,12 @@ $(document).ready(function(e) {
     // Restart the graph and load neurons from #model_id
     $("#download").on('click', function(e) {
         $.get("./graph", {'model_id': $('#model_id').val()}, function(response) {
+            $("#graph").empty();
+            $("#neurons").empty();
+            dygraph = undefined;
+            labels = ['T'];
+            colors = [];
+            data = [];
             console.log(response);
             Object.keys(response.neurons).forEach(function(k) {
                 addNeuron(k);
@@ -74,16 +106,20 @@ $(document).ready(function(e) {
                 "width": "100%",
                 "xlabel": "Time(ms)",
                 "ylabel": "Potential(mV)",
-                "labels": labels
+                "labels": labels,
+                "colors": colors
                 });
         }, 'json');
     });
     // Get a few more steps and push them onto the graph
     $("#step").on('click', function recurse (e) {
+        var steps = $('#steps').val();
+        steps = steps > 20 ? 20 : steps;
         $.get("./step/", { // Get some data
-                "steps": $('#steps').val(),
+                "steps": steps,
                 "model_id": $("#model_id").val()
              }, function(V) {
+            $('#steps').val(steps);
             for (var i = 0; i < V.length; i++) {
                 data.push(V[i]);
                 data.shift();

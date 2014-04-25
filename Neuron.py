@@ -16,8 +16,7 @@ ZO RELAXEN UND WATSCHEN DER BLINKENLICHTEN.
 #Original code from Byron Galbraith via neurdon
 
 
-import numpy as np
-import scipy as sp
+import math
 import random
 import sys
 import uuid
@@ -63,17 +62,17 @@ class Synapse(object):
 
 class Neuron(object):
     def alpha_n(self,v):
-        return 0.01*(-v + 10)/(sp.exp((-v + 10)/10) - 1) if v != 10 else 0.1
+        return 0.01*(-v + 10)/(math.exp((-v + 10)/10) - 1) if v != 10 else 0.1
     def beta_n(self,v):
-        return 0.125*sp.exp(-v/80)
+        return 0.125*math.exp(-v/80)
     def alpha_m(self,v):
-        return 0.1*(-v + 25)/(sp.exp((-v + 25)/10) - 1) if v != 25 else 1
+        return 0.1*(-v + 25)/(math.exp((-v + 25)/10) - 1) if v != 25 else 1
     def beta_m(self,v):
-        return 4*sp.exp(-v/18)
+        return 4*math.exp(-v/18)
     def alpha_h(self,v):
-        return 0.07*sp.exp(-v/20)
+        return 0.07*math.exp(-v/20)
     def beta_h(self,v):
-        return 1/(sp.exp((-v + 30)/10) + 1)
+        return 1/(math.exp((-v + 30)/10) + 1)
 
     class _histent(object):
         def __init__(self, V, m, n, h, I):
