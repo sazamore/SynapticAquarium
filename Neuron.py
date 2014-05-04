@@ -20,45 +20,90 @@ import math
 import random
 import sys
 import uuid
+import struct
+import json
+import io
+from itertools import repeat
 
 class Model(object):
-    def __init__(self, dT):
+    def __init__(self, 
+    			 dT,  			# integration step delta
+    			 histlen=20,  	# maximum synapse length
+    			 stringlen=50,  # light string length
+    			 neurons=None,  # Map of key: Neuron kwargs
+    			 synapses=None, # map of key: (Synapse kwargs, pre neuron key, post neuron key)
+    			 keyorder=None):# Order that neuron or synapse values are serialized (need not be comprehensive)
+        self.buf = io.BufferedRandom(io.BytesIO("\x00" * 3 * histlen))
         self._dT = dT
-        self._neurons = {}
-        self._synapses = []
-        self._key_order = []
         self._t = 0.
+        self._stringlen = stringlen
+        self._histlen = histlen
+        if neurons:
+        	self._neurons = {k: Neuron(**args) for k, args in neurons.items()}
+        else:
+        	self._neurons = {}
+        if synapses:
+        	self._synapses = {k: Synapse(self._neurons[prekey], self._neurons[postkey], **args) for k, (args, prekey, postkey) in synapses}
+        else:
+	        self._synapses = {}
+        if keyorder:
+            self._keyorder = keyorder
+        else:
+            self._keyorder = []
+    def params(self):
+    	return {
+    		"dT": self._dT,
+    		"histlen": self._histlen,
+    		"stringlen": self._stringlen,
+    		"synapses": {k: (s.params(), prekey, postkey) for k, (s, prekey, postkey) in self._synapses.items()},
+    		"neurons": {k: n.params() for k, n in self._neurons.items()},
+    		"keyorder": self._keyorder[:],
+    	}
     def add(self, **kwargs):
-        n = Neuron(**kwargs)
+        n = Neuron(histlen=self._histlen, **kwargs)
         k = str(uuid.uuid4())
         self._neurons[k] = n
-        self._key_order.append(k)
+        self._keyorder.append(k)
         return (k, n)
     def header(self):
-        return self._key_order;
-    def connect(self, prekey, postkey, weight):
-        s = Synapse(self._neurons[prekey], self._neurons[postkey], weight=weight)
-        self._synapses.append((s, prekey, postkey))
+        return self._keyorder;
+    def connect(self, prekey, postkey, **kwargs):
+    	k = str(uuid.uuid4())
+        s = Synapse(self._neurons[prekey], self._neurons[postkey], **kwargs)
+        self._synapses[k] = (s, prekey, postkey)
+        self._keyorder.append(k)
         return s
     def step(self):
         v = [self._t]
         self._t += self._dT
-        for k in self._key_order:
+        for k in (k for k in self._keyorder if k in self._neurons):
             v.append(self._neurons[k].step(self._dT))
+        self.buf.seek(0)
+        for k in self._keyorder:
+            if k in self._neurons:
+                self._neurons[k].bufferize(self.buf)
+            elif k in self._synapses:
+                self._synapses[k][0].bufferize(self.buf)
+        self.buf.flush()
         return v
-    def graph(self): # Serialize the model
-        neurons = {k: n.params() for (k, n) in self._neurons.items()}
-        edges = [(prekey, postkey, s.weight) for s, prekey, postkey in self._synapses]
-        return (neurons, edges)
-        
+
 class Synapse(object):
-    def __init__(self, pre, post, weight=None):
-        self.weight = random.random() if weight is None else weight
+    def __init__(self, pre, post, weight=None, length=1):
+        self._weight = random.random() if weight is None else weight
         self.pre = pre
         post.inputs.append(self)
+        self._length=length
+        assert(length <= len(self.pre.history))
     def output(self):
         "Effect on postsynaptic current"
-        return self.pre.history[-1].V * self.weight
+        return self.pre.history[-self._length].V * self._weight
+    def params(self):
+    	return {"weight": self._weight,
+    			"length": self._length}
+    def bufferize(self, buf):
+        for i in range(self._length):
+            buf.write(chr(int(max(0, min(self.pre.history[-i].V, 255)))))
+            buf.seek(buf.tell() + 2)
 
 class Neuron(object):
     def alpha_n(self,v):
@@ -84,6 +129,7 @@ class Neuron(object):
 
     def __init__(
         self,
+        histlen = 20,
         ### channel activity ###
         ## setup parameters and state variables
         ## HH Parameters
@@ -115,7 +161,7 @@ class Neuron(object):
         self.h      = self.alpha_h(V_zero)/(self.alpha_h(V_zero) + self.beta_h(V_zero))
         # idx n = value at T - n * dT
         self.inputs  = []
-        self.histlen = 10
+        self.histlen = histlen
         self.history = [self._histent(self.V, self.m, self.n, self.h, self.I) for _ in range(self.histlen)]
 
     def __str__(self):
@@ -133,6 +179,10 @@ class Neuron(object):
             'E_l':      self.E_l,
             'I':        self.I
         }
+    def bufferize(self, buf):
+        buf.seek(buf.tell() + 1)
+        buf.write(chr(int(max(0, min(self.V, 255)))))
+        buf.seek(buf.tell() + 1)
     def step(self, dT):
         "Step the model by dT. Strange things may happen if you vary dT"
         self.I = sum([i.output() for i in self.inputs])

@@ -42,7 +42,7 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_header('Content-Type', "text/html")
             self.end_headers()
             self.wfile.write(open("./synaq.html", 'r').read())
-        elif path[0] == 'new':
+        elif path[0] == 'add':
             self.send_response(200)
             self.send_header('Content-Type', "text/plain")
             self.end_headers()
@@ -67,7 +67,7 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_header('Content-Type', "text/plain")
             self.end_headers()
             model.connect(**params)
-        elif path[0] == 'reset':
+        elif path[0] == 'new':
             self.send_response(200)
             self.send_header('Content-Type', "text/plain")
             self.end_headers()
@@ -80,9 +80,7 @@ class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-Type', "application/json")
             self.end_headers()
-            v, e = model.graph()
-            g = {"neurons": v,
-                 "edges": e };
+            g = model.params()
             json.dump(g, self.wfile)
             print "Dumping", repr(g)
         else:

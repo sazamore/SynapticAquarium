@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <head>
-<title>MEANWHILE, AT WEBPAGE...</title>
+<title>GENTLEMEN, BEHOLD! WEBPAGE!</title>
 <script src="https://code.jquery.com/jquery-2.1.0.min.js"></script>
 <script src="http://cdnjs.cloudflare.com/ajax/libs/dygraph/1.0.1/dygraph-combined.js"></script>
 <script type="text/javascript">
@@ -15,7 +15,6 @@ window.URL = window.URL ||
              window.webkitURL
 
 $(document).ready(function(e) {
-    
     var $graph = $("#graph");
     var dygraph;
     var data = [];
@@ -53,8 +52,8 @@ $(document).ready(function(e) {
         $('#neurons').append('<tr><td class="neuron" style="color:' + c + '">' + name + '</td></tr>');
     }
     // Ger a new model and set it to #model_id
-    $("#reset").on('click', function(e) {
-        $.get("./reset", function(response) {
+    $("#new").on('click', function(e) {
+        $.get("./new", function(response) {
             $("#graph").empty();
             $("#neurons").empty();
             dygraph = undefined;
@@ -69,19 +68,20 @@ $(document).ready(function(e) {
     $("#download").on('click', function(e) {
         $.get("./graph", {'model_id': $('#model_id').val()}, function(response) {
             $("#graph").empty();
-            $("#neurons").empty();
+            $("#neurons").empty()   ;
             dygraph = undefined;
             labels = ['T'];
             colors = [];
             data = [];
             console.log(response);
+            $("#json").val(JSON.stringify(response));
             Object.keys(response.neurons).forEach(function(k) {
                 addNeuron(k);
             });;
         }, 'json');
     });
     // Add a neuron
-    $("#create").on("click", function(e) {
+    $("#add").on("click", function(e) {
         var paramMap = {"model_id": $('#model_id').val()};
         $("#params input").each(function(key, elem) {
             var val = $(elem).val();
@@ -90,7 +90,7 @@ $(document).ready(function(e) {
             }
         });
         console.log(paramMap);
-        $.post("./new/", paramMap, addNeuron)
+        $.post("./add/", paramMap, addNeuron)
     });
     // Reset the graph and request a full view worth of samples
     $("#clear").on('click', function(e) {
@@ -154,7 +154,8 @@ $(document).ready(function(e) {
                     'model_id': $('#model_id').val(), 
                     'prekey':   startk,
                     'postkey':  endk, 
-                    'weight':   $('#weight').val()
+                    'weight':   $('#weight').val(),
+                    'length':   $('#length').val()
                 }, function(response) {
                 console.log('Connected', startk, 'to', endk, 'got', response);
                 $that2.removeClass('to');
@@ -174,6 +175,15 @@ body {
 #graph {
     width: 50%;
     height: 300px;
+}
+#json {
+    background-color: #333;
+    border: 2px solid red;
+    font-family: monospace;
+    width: 50%;
+    height: 20em;
+    color: red;
+    float: right;
 }
 input {
     background-color: #333;
@@ -196,6 +206,9 @@ button {
     border-top: 1px solid red;
     border-bottom: 1px solid red;
 }
+#neurons {
+    float: left;
+}
 #neurons td {
     border: 1px solid red;
     -webkit-touch-callout: none;
@@ -217,9 +230,10 @@ button {
 model id: <input id="model_id" value="" style="width: 53ex"><br />
 <div id="graph"></div>
 <div id="controls">
-    [ <button id="reset">Reset!</button> | 
+    [ <button id="new">New!</button> | 
+    <button id="upload">Upload!</button> | 
     <button id="download">Download!</button> ] 
-    [ <button id="create">Create!</button> | Connect! ] +
+    [ <button id="add">Add!</button> | Connect! ] +
     <button id="clear">Clear!</button>
     <button id="step">Step!</button> +
     <button id="march">March!</button> 
@@ -235,13 +249,15 @@ model id: <input id="model_id" value="" style="width: 53ex"><br />
             <td>Number of integration steps per graph update. Only used with 'Step'</td>
         </tr>
         <tr>
-            <td colspan=3>HH Parameters, only used with 'Create':</td>
+            <td colspan=3>HH Parameters, only used with 'Add':</td>
         </tr>
         <tr>
             <td>V_zero</td><td><input id="V_zero" /></td>
+            <td>Initial Voltage</td>
         </tr>
         <tr>
             <td>Cm</td><td><input id="Cm" /></td>
+            <td>Membrane Capacidance</td>
         </tr>
         <tr>
             <td>gbar_Na</td><td><input id="gbar_Na" /></td>
@@ -268,9 +284,14 @@ model id: <input id="model_id" value="" style="width: 53ex"><br />
     </table>
 </div>
 <div id="connectparams">
-weight: <input id="weight" value="0.5" />Click and drag between 2 neurons below to connect them.<span id="createfirst">(But create some first!)</span><br />
+weight: <input id="weight" value="0.5" />
+length: <input id="length" value="5" />
+Click and drag between 2 neurons below to connect them.<span id="createfirst">(But create some first!)</span><br />
 </div>
 <table id="neurons">
 </table>
+Click 'Download' to dump the current model and sync the page. <br />
+Click 'Upload' to send the model below to the server and sync the page <br />
+<textarea id="json"></textarea>
 </body>
 </html>
