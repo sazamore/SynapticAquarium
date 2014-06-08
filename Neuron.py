@@ -33,7 +33,7 @@ class Model(object):
     			 neurons=None,  # Map of key: Neuron kwargs
     			 synapses=None, # map of key: (Synapse kwargs, pre neuron key, post neuron key)
     			 keyorder=None):# Order that neuron or synapse values are serialized (need not be comprehensive)
-        self.buf = io.BufferedRandom(io.BytesIO("\x00" * 3 * histlen))
+        self.buf = io.BytesIO("\x00" * 3 * histlen)
         self._dT = dT
         self._t = 0.
         self._stringlen = stringlen
@@ -85,11 +85,12 @@ class Model(object):
             elif k in self._synapses:
                 self._synapses[k][0].bufferize(self.buf)
         self.buf.flush()
+        self.buf.truncate()
         return v
 
 class Synapse(object):
-    def __init__(self, pre, post, weight=None, length=1):
-        self._weight = random.random() if weight is None else weight
+    def __init__(self, pre, post, weight, length):
+        self._weight = weight
         self.pre = pre
         post.inputs.append(self)
         self._length=length
@@ -102,8 +103,8 @@ class Synapse(object):
     			"length": self._length}
     def bufferize(self, buf):
         for i in range(self._length):
-            buf.write(chr(int(max(0, min(self.pre.history[-i].V, 255)))))
-            buf.seek(buf.tell() + 2)
+            buf.write(chr(int(max(0, min(self.pre.history[-i].V, 255))))) #R
+            buf.seek(buf.tell() + 2) #GB
 
 class Neuron(object):
     def alpha_n(self,v):
@@ -165,9 +166,9 @@ class Neuron(object):
         self.history = [self._histent(self.V, self.m, self.n, self.h, self.I) for _ in range(self.histlen)]
 
     def __str__(self):
-        return "HH Neuron: m: \t%r\tn:%r\th:\t%r\tV:\t%r" % (
-               self.m, self.n, self.h, self.V)
-    def params(self): # return a dict such that you can pass it as kwargs to the constructor
+        return "HH Neuron: m: \t%r\tn:%r\th:\t%r\tV:\t%r" % \
+                (self.m, self.n, self.h, self.V)
+    def params(self): # return a dict such that you can pass it as kwargs to the constructor and get an equivalent neuron to this one
         return  {
             'V_zero':   self.V_zero,
             'Cm':       self.Cm,
@@ -180,9 +181,9 @@ class Neuron(object):
             'I':        self.I
         }
     def bufferize(self, buf):
-        buf.seek(buf.tell() + 1)
-        buf.write(chr(int(max(0, min(self.V, 255)))))
-        buf.seek(buf.tell() + 1)
+        buf.seek(buf.tell() + 1) #R
+        buf.write(chr(int(max(0, min(self.V, 255))))) #G
+        buf.seek(buf.tell() + 1) #B
     def step(self, dT):
         "Step the model by dT. Strange things may happen if you vary dT"
         self.I = sum([i.output() for i in self.inputs])
