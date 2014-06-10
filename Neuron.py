@@ -76,9 +76,10 @@ class Model(object):
     def step(self):
         v = [self._t]
         self._t += self._dT
-        for k in (k for k in self._keyorder if k in self._neurons):
-            v.append(self._neurons[k].step(self._dT))
         self.buf.seek(0)
+        for n in self._neurons.values():
+            v.append(n.step(self._dT))
+
         for k in self._keyorder:
             if k in self._neurons:
                 self._neurons[k].bufferize(self.buf)
@@ -102,9 +103,8 @@ class Synapse(object):
     	return {"weight": self._weight,
     			"length": self._length}
     def bufferize(self, buf):
-        for i in range(self._length):
-            buf.write(chr(int(max(0, min(self.pre.history[-i].V, 255))))) #R
-            buf.seek(buf.tell() + 2) #GB
+        r = [chr(int(max(0, min(self.pre.history[-i].V, 255)))) for i in xrange(self._length)]
+        buf.write("\x00\x00".join(r))
 
 class Neuron(object):
     def alpha_n(self,v):
@@ -163,27 +163,8 @@ class Neuron(object):
         # idx n = value at T - n * dT
         self.inputs  = []
         self.histlen = histlen
-        self.history = [self._histent(self.V, self.m, self.n, self.h, self.I) for _ in range(self.histlen)]
+        self.history = [self._histent(self.V, self.m, self.n, self.h, self.I) for _ in xrange(self.histlen)]
 
-    def __str__(self):
-        return "HH Neuron: m: \t%r\tn:%r\th:\t%r\tV:\t%r" % \
-                (self.m, self.n, self.h, self.V)
-    def params(self): # return a dict such that you can pass it as kwargs to the constructor and get an equivalent neuron to this one
-        return  {
-            'V_zero':   self.V_zero,
-            'Cm':       self.Cm,
-            'gbar_Na':  self.gbar_Na,
-            'gbar_K':   self.gbar_K,
-            'gbar_l':   self.gbar_l,
-            'E_Na':     self.E_Na,
-            'E_K':      self.E_K,
-            'E_l':      self.E_l,
-            'I':        self.I
-        }
-    def bufferize(self, buf):
-        buf.seek(buf.tell() + 1) #R
-        buf.write(chr(int(max(0, min(self.V, 255))))) #G
-        buf.seek(buf.tell() + 1) #B
     def step(self, dT):
         "Step the model by dT. Strange things may happen if you vary dT"
         self.I = sum([i.output() for i in self.inputs])
@@ -201,3 +182,22 @@ class Neuron(object):
         self.history.append(self._histent(self.V, self.m, self.n, self.h, self.I))
         del self.history[0]
         return self.V
+
+    def __str__(self):
+        return "HH Neuron: m: \t%r\tn:%r\th:\t%r\tV:\t%r" % \
+                (self.m, self.n, self.h, self.V)
+    def params(self): # return a dict such that you can pass it as kwargs to the constructor and get an equivalent neuron to this one
+        return  {
+            'V_zero':   self.V_zero,
+            'Cm':       self.Cm,
+            'gbar_Na':  self.gbar_Na,
+            'gbar_K':   self.gbar_K,
+            'gbar_l':   self.gbar_l,
+            'E_Na':     self.E_Na,
+            'E_K':      self.E_K,
+            'E_l':      self.E_l,
+            'I':        self.I
+        }
+
+    def bufferize(self, buf):
+        buf.write("\x00" + chr(int(max(0, min(self.V, 255)))) + "\x00") #G
