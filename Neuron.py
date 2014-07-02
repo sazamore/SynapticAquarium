@@ -21,7 +21,6 @@ import random
 import sys
 import uuid
 import struct
-import json
 import io
 from itertools import repeat
 
@@ -29,21 +28,19 @@ class Model(object):
     def __init__(self, 
     			 dT,  			# integration step delta
     			 histlen=20,  	# maximum synapse length
-    			 stringlen=50,  # light string length
     			 neurons=None,  # Map of key: Neuron kwargs
     			 synapses=None, # map of key: (Synapse kwargs, pre neuron key, post neuron key)
     			 keyorder=None):# Order that neuron or synapse values are serialized (need not be comprehensive)
         self.buf = io.BytesIO("\x00" * 3 * histlen)
         self._dT = dT
         self._t = 0.
-        self._stringlen = stringlen
         self._histlen = histlen
         if neurons:
         	self._neurons = {k: Neuron(**args) for k, args in neurons.items()}
         else:
         	self._neurons = {}
         if synapses:
-        	self._synapses = {k: Synapse(self._neurons[prekey], self._neurons[postkey], **args) for k, (args, prekey, postkey) in synapses}
+        	self._synapses = {k: (Synapse(self._neurons[prekey], self._neurons[postkey], **args), prekey, postkey) for k, (args, prekey, postkey) in synapses.items()}
         else:
 	        self._synapses = {}
         if keyorder:
@@ -54,7 +51,6 @@ class Model(object):
     	return {
     		"dT": self._dT,
     		"histlen": self._histlen,
-    		"stringlen": self._stringlen,
     		"synapses": {k: (s.params(), prekey, postkey) for k, (s, prekey, postkey) in self._synapses.items()},
     		"neurons": {k: n.params() for k, n in self._neurons.items()},
     		"keyorder": self._keyorder[:],
@@ -87,6 +83,7 @@ class Model(object):
                 self._synapses[k][0].bufferize(self.buf)
         self.buf.flush()
         self.buf.truncate()
+        self.buf.seek(0)
         return v
 
 class Synapse(object):
@@ -131,6 +128,7 @@ class Neuron(object):
     def __init__(
         self,
         histlen = 20,
+        length  = 1,      # LED
         ### channel activity ###
         ## setup parameters and state variables
         ## HH Parameters
@@ -143,7 +141,8 @@ class Neuron(object):
         E_Na    = 115,    # mV
         E_K     = -12,    # mV
         E_l     = 10.613):# mV
-
+        ## LED parameters
+        self._length = length
         ## HH Parameters
         self.V_zero = V_zero
         self.Cm     = Cm
@@ -188,6 +187,7 @@ class Neuron(object):
                 (self.m, self.n, self.h, self.V)
     def params(self): # return a dict such that you can pass it as kwargs to the constructor and get an equivalent neuron to this one
         return  {
+            'length':   self._length,
             'V_zero':   self.V_zero,
             'Cm':       self.Cm,
             'gbar_Na':  self.gbar_Na,
@@ -196,8 +196,8 @@ class Neuron(object):
             'E_Na':     self.E_Na,
             'E_K':      self.E_K,
             'E_l':      self.E_l,
-            'I':        self.I
+            'I':        self._I
         }
 
     def bufferize(self, buf):
-        buf.write("\x00" + chr(int(max(0, min(self.V, 255)))) + "\x00") #G
+        buf.write(("\x00" + chr(int(max(0, min(self.V, 255)))) + "\x00") * self._length) #G

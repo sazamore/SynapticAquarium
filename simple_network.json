@@ -1,0 +1,69 @@
+{
+    "neurons": {
+        "first": {
+            "I": 5,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "length": 1
+        },
+        "second": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "length": 6
+        },
+        "third": {
+            "I": 5,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "length": 6
+        },
+        "fourth": {
+            "I": 1,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "length": 6
+        }
+    },
+    "synapses": {
+        "sfirst": [{
+            "length": 17,
+            "weight": 0.5
+        }, "first", "second"],
+        "ssecond": [{
+            "length": 7,
+            "weight": 0.5
+        }, "second", "third"],
+        "sthird": [{
+            "length": 13,
+            "weight": 0.5
+        }, "third", "fourth"]
+    },
+    "histlen": 20,
+    "dT": 0.025,
+    "keyorder": ["sfirst", "second", "ssecond", "third", "sthird"]
+}
