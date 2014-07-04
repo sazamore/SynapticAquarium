@@ -36,7 +36,7 @@ class Model(object):
         self._t = 0.
         self._histlen = histlen
         if neurons:
-        	self._neurons = {k: Neuron(**args) for k, args in neurons.items()}
+        	self._neurons = {k: Neuron(histlen=self._histlen, **args) for k, args in neurons.items()}
         else:
         	self._neurons = {}
         if synapses:
@@ -69,38 +69,41 @@ class Model(object):
         self._synapses[k] = (s, prekey, postkey)
         self._keyorder.append(k)
         return s
-    def step(self):
+    def step(self, bufferize=True):
         v = [self._t]
         self._t += self._dT
         self.buf.seek(0)
         for n in self._neurons.values():
             v.append(n.step(self._dT))
-
-        for k in self._keyorder:
-            if k in self._neurons:
-                self._neurons[k].bufferize(self.buf)
-            elif k in self._synapses:
-                self._synapses[k][0].bufferize(self.buf)
-        self.buf.flush()
-        self.buf.truncate()
-        self.buf.seek(0)
+        if bufferize:
+            for k in self._keyorder:
+                if k in self._neurons:
+                    self._neurons[k].bufferize(self.buf)
+                elif k in self._synapses:
+                    self._synapses[k][0].bufferize(self.buf)
+            self.buf.flush()
+            self.buf.truncate()
+            self.buf.seek(0)
         return v
 
 class Synapse(object):
-    def __init__(self, pre, post, weight, length):
+    def __init__(self, pre, post, weight, length, nlights=None):
         self._weight = weight
         self.pre = pre
         post.inputs.append(self)
-        self._length=length
-        assert(length <= len(self.pre.history))
+        self._length = length
+        self._nlights = nlights or length
+        if length >= len(self.pre.history):
+            raise AssertionError("Not long enough, prehistory is %d, this is %d" % (len(self.pre.history), length))
     def output(self):
         "Effect on postsynaptic current"
         return self.pre.history[-self._length].V * self._weight
     def params(self):
     	return {"weight": self._weight,
+                "lights": self._nlights,
     			"length": self._length}
     def bufferize(self, buf):
-        r = [chr(int(max(0, min(self.pre.history[-i].V, 255)))) for i in xrange(self._length)]
+        r = [chr(int(max(0, min(self.pre.history[-i].V, 255)))) for i in xrange(0, self._length, self._length // self._nlights)]
         buf.write("\x00\x00".join(r))
 
 class Neuron(object):

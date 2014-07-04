@@ -72,6 +72,8 @@ def main():
 			if gargs.limit is not None:
 				time.sleep(1./gargs.limit)
 			m.step()
+			for _ in xrange(10):
+				m.step(bufferize=False)
 			if gargs.output: # write to a file
 				d = m.buf.read()
 				print(gargs.output.tell(), len(d), repr(d))
@@ -82,7 +84,7 @@ def main():
 				m.buf.seek(0, io.SEEK_END)
 			nbytes += m.buf.tell()
 			nsteps += 1
-	except Exception as e: 
+	except (Exception, KeyboardInterrupt) as e: 
 		print "FAILURE! %r" % e
 		traceback.print_exc()
 

@@ -1,7 +1,7 @@
 {
     "neurons": {
         "first": {
-            "I": 5,
+            "I": 9,
             "gbar_K": 36,
             "V_zero": -10,
             "Cm": 1,
@@ -51,19 +51,22 @@
     },
     "synapses": {
         "sfirst": [{
-            "length": 17,
+            "nlights": 17,
+            "length": 170,
             "weight": 0.5
         }, "first", "second"],
         "ssecond": [{
-            "length": 7,
+            "nlights": 7,
+            "length": 70,
             "weight": 0.5
         }, "second", "third"],
         "sthird": [{
-            "length": 13,
+            "nlights": 13,
+            "length": 130,
             "weight": 0.5
         }, "third", "fourth"]
     },
-    "histlen": 20,
-    "dT": 0.025,
+    "histlen": 200,
+    "dT": 0.04,
     "keyorder": ["sfirst", "second", "ssecond", "third", "sthird"]
 }
