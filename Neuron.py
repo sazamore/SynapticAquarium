@@ -22,21 +22,19 @@ import sys
 import uuid
 import struct
 import io
-from itertools import repeat
+from collections import deque
 
 class Model(object):
     def __init__(self, 
     			 dT,  			# integration step delta
-    			 histlen=20,  	# maximum synapse length
     			 neurons=None,  # Map of key: Neuron kwargs
     			 synapses=None, # map of key: (Synapse kwargs, pre neuron key, post neuron key)
     			 keyorder=None):# Order that neuron or synapse values are serialized (need not be comprehensive)
-        self.buf = io.BytesIO("\x00" * 3 * histlen)
+        self.buf = io.BytesIO( # CHANGE TO SUM OF LEDs
         self._dT = dT
         self._t = 0.
-        self._histlen = histlen
         if neurons:
-        	self._neurons = {k: Neuron(histlen=self._histlen, **args) for k, args in neurons.items()}
+        	self._neurons = {k: Neuron(**args) for k, args in neurons.items()}
         else:
         	self._neurons = {}
         if synapses:
@@ -50,13 +48,12 @@ class Model(object):
     def params(self):
     	return {
     		"dT": self._dT,
-    		"histlen": self._histlen,
     		"synapses": {k: (s.params(), prekey, postkey) for k, (s, prekey, postkey) in self._synapses.items()},
     		"neurons": {k: n.params() for k, n in self._neurons.items()},
     		"keyorder": self._keyorder[:],
     	}
     def add(self, **kwargs):
-        n = Neuron(histlen=self._histlen, **kwargs)
+        n = Neuron(**kwargs)
         k = str(uuid.uuid4())
         self._neurons[k] = n
         self._keyorder.append(k)
@@ -74,7 +71,9 @@ class Model(object):
         self._t += self._dT
         self.buf.seek(0)
         for n in self._neurons.values():
-            v.append(n.step(self._dT))
+            v.append(n.step(self._dT)) # XXX - delete this perhaps? 
+        for syn, prekey, postkey in self._synapses.values():
+            syn.step()
         if bufferize:
             for k in self._keyorder:
                 if k in self._neurons:
@@ -93,18 +92,28 @@ class Synapse(object):
         post.inputs.append(self)
         self._length = length
         self._nlights = nlights or length
+        self._values = deque(maxlen=nlights) # from collections
+        senf._frame = 0
         if length >= len(self.pre.history):
             raise AssertionError("Not long enough, prehistory is %d, this is %d" % (len(self.pre.history), length))
+
+    def step(self):
+        if self._frame % (self._length // self._nlights):
+            self._values.popleft()
+            self._values.append(sef.pre.V)
+        self._frame++
+
     def output(self):
         "Effect on postsynaptic current"
-        return self.pre.history[-self._length].V * self._weight
+        return self._values[0] * self._weight
+
     def params(self):
     	return {"weight": self._weight,
                 "lights": self._nlights,
-    			"length": self._length}
+    			"length": self._length,}
+
     def bufferize(self, buf):
-        r = [chr(int(max(0, min(self.pre.history[-i].V, 255)))) for i in xrange(0, self._length, self._length // self._nlights)]
-        buf.write("\x00\x00".join(r))
+        buf.write("\x00\x00".join(self._values))
 
 class Neuron(object):
     def alpha_n(self,v):
@@ -120,17 +129,8 @@ class Neuron(object):
     def beta_h(self,v):
         return 1/(math.exp((-v + 30)/10) + 1)
 
-    class _histent(object):
-        def __init__(self, V, m, n, h, I):
-            self.V = V
-            self.m = m
-            self.n = n
-            self.h = h
-            self.I = I
-
     def __init__(
         self,
-        histlen = 20,
         length  = 1,      # LED
         ### channel activity ###
         ## setup parameters and state variables
@@ -164,8 +164,6 @@ class Neuron(object):
         self.h      = self.alpha_h(V_zero)/(self.alpha_h(V_zero) + self.beta_h(V_zero))
         # idx n = value at T - n * dT
         self.inputs  = []
-        self.histlen = histlen
-        self.history = [self._histent(self.V, self.m, self.n, self.h, self.I) for _ in xrange(self.histlen)]
 
     def step(self, dT):
         "Step the model by dT. Strange things may happen if you vary dT"
@@ -180,14 +178,13 @@ class Neuron(object):
         self.V += (self._I + self.I - 
                     g_Na*(self.V - self.E_Na) - 
                     g_K*(self.V - self.E_K) - 
-                    g_l*(self.V- self.E_l)) / self.Cm * dT
-        self.history.append(self._histent(self.V, self.m, self.n, self.h, self.I))
-        del self.history[0]
+                    g_l*(self.V - self.E_l)) / self.Cm * dT
         return self.V
 
     def __str__(self):
         return "HH Neuron: m: \t%r\tn:%r\th:\t%r\tV:\t%r" % \
                 (self.m, self.n, self.h, self.V)
+
     def params(self): # return a dict such that you can pass it as kwargs to the constructor and get an equivalent neuron to this one
         return  {
             'length':   self._length,
