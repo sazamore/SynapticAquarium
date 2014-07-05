@@ -1,18 +1,6 @@
 {
     "neurons": {
         "first": {
-            "I": 9,
-            "gbar_K": 36,
-            "V_zero": -10,
-            "Cm": 1,
-            "E_K": -12,
-            "E_Na": 115,
-            "gbar_l": 0.3,
-            "E_l": 10.613,
-            "gbar_Na": 120,
-            "length": 1
-        },
-        "second": {
             "I": 10,
             "gbar_K": 36,
             "V_zero": -10,
@@ -22,10 +10,22 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "length": 6
+            "nlights": 0
+        },
+        "second": {
+            "I": 0,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 5
         },
         "third": {
-            "I": 5,
+            "I": 0,
             "gbar_K": 36,
             "V_zero": -10,
             "Cm": 1,
@@ -34,10 +34,10 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "length": 6
+            "nlights": 5
         },
         "fourth": {
-            "I": 1,
+            "I": 0,
             "gbar_K": 36,
             "V_zero": -10,
             "Cm": 1,
@@ -46,27 +46,29 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "length": 6
+            "nlights": 6
         }
     },
     "synapses": {
         "sfirst": [{
             "nlights": 17,
-            "length": 170,
-            "weight": 0.5
+            "length": 340,
+            "weight": 0.05,
+            "reverse": true
         }, "first", "second"],
         "ssecond": [{
             "nlights": 7,
             "length": 70,
-            "weight": 0.5
+            "weight": 0.5,
+            "reverse": true
         }, "second", "third"],
         "sthird": [{
             "nlights": 13,
             "length": 130,
-            "weight": 0.5
+            "weight": 0.5,
+            "reverse": true
         }, "third", "fourth"]
     },
-    "histlen": 200,
     "dT": 0.04,
     "keyorder": ["sfirst", "second", "ssecond", "third", "sthird"]
 }

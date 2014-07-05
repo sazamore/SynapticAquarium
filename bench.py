@@ -26,7 +26,7 @@ mg.add_argument("-u", "--udphost", type=str, default=None, help="host:port to se
 mg.add_argument("--tcphost", type=str, default=None, help="host:port to send TCP packets to")
 
 def random_network():
-	m = Model(dT=0.0001, histlen=gargs.maxlen)
+	m = Model(dT=0.0001)
 	nkeys = [None for _ in range(gargs.num)]
 	for i in range(gargs.num):
 		nkeys[i], _ = m.add()

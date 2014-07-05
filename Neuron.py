@@ -22,7 +22,10 @@ import sys
 import uuid
 import struct
 import io
-from collections import deque
+import collections
+# Transfer functions - take a float and return a chr
+def clamp(val):
+    return chr(int(max(min(val, 255), 0)))
 
 class Model(object):
     def __init__(self, 
@@ -30,7 +33,6 @@ class Model(object):
     			 neurons=None,  # Map of key: Neuron kwargs
     			 synapses=None, # map of key: (Synapse kwargs, pre neuron key, post neuron key)
     			 keyorder=None):# Order that neuron or synapse values are serialized (need not be comprehensive)
-        self.buf = io.BytesIO( # CHANGE TO SUM OF LEDs
         self._dT = dT
         self._t = 0.
         if neurons:
@@ -45,6 +47,7 @@ class Model(object):
             self._keyorder = keyorder
         else:
             self._keyorder = []
+        self.buf = io.BytesIO()
     def params(self):
     	return {
     		"dT": self._dT,
@@ -86,22 +89,21 @@ class Model(object):
         return v
 
 class Synapse(object):
-    def __init__(self, pre, post, weight, length, nlights=None):
+    def __init__(self, pre, post, weight, length, reverse=True, nlights=None):
         self._weight = weight
         self.pre = pre
         post.inputs.append(self)
         self._length = length
-        self._nlights = nlights or length
-        self._values = deque(maxlen=nlights) # from collections
-        senf._frame = 0
-        if length >= len(self.pre.history):
-            raise AssertionError("Not long enough, prehistory is %d, this is %d" % (len(self.pre.history), length))
+        self._reverse = reverse
+        self.nlights = nlights or length
+        self._values = collections.deque([0 for _ in range(self.nlights)]) 
+        self._frame = 0
 
     def step(self):
-        if self._frame % (self._length // self._nlights):
+        if not self._frame % (self._length // self.nlights):
             self._values.popleft()
-            self._values.append(sef.pre.V)
-        self._frame++
+            self._values.append(self.pre.V)
+        self._frame += 1
 
     def output(self):
         "Effect on postsynaptic current"
@@ -109,11 +111,15 @@ class Synapse(object):
 
     def params(self):
     	return {"weight": self._weight,
-                "lights": self._nlights,
+                "reverse": self._reverse,
+                "nlights": self.nlights,
     			"length": self._length,}
 
     def bufferize(self, buf):
-        buf.write("\x00\x00".join(self._values))
+        if self._reverse:
+            buf.write("".join(["\x00\x00" + clamp(v) for v in reversed(self._values)]))
+        else:
+            buf.write("".join(["\x00\x00" + clamp(v) for v in self._values]))
 
 class Neuron(object):
     def alpha_n(self,v):
@@ -131,7 +137,7 @@ class Neuron(object):
 
     def __init__(
         self,
-        length  = 1,      # LED
+        nlights  = 0,     # LED
         ### channel activity ###
         ## setup parameters and state variables
         ## HH Parameters
@@ -145,7 +151,7 @@ class Neuron(object):
         E_K     = -12,    # mV
         E_l     = 10.613):# mV
         ## LED parameters
-        self._length = length
+        self.nlights =nlights
         ## HH Parameters
         self.V_zero = V_zero
         self.Cm     = Cm
@@ -187,7 +193,7 @@ class Neuron(object):
 
     def params(self): # return a dict such that you can pass it as kwargs to the constructor and get an equivalent neuron to this one
         return  {
-            'length':   self._length,
+            'nlights':  self.nlights,
             'V_zero':   self.V_zero,
             'Cm':       self.Cm,
             'gbar_Na':  self.gbar_Na,
@@ -200,4 +206,4 @@ class Neuron(object):
         }
 
     def bufferize(self, buf):
-        buf.write(("\x00" + chr(int(max(0, min(self.V, 255)))) + "\x00") * self._length) #G
+        buf.write(("\x00" + chr(int(max(0, min(self.V, 255)))) + "\x00") * self.nlights) #G
