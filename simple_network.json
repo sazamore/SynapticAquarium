@@ -12,8 +12,80 @@
             "gbar_Na": 120,
             "nlights": 0
         },
-        "second": {
-            "I": 0,
+        "steven": {
+            "I": 2,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 6
+        },
+        "james": {
+            "I": 2,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 6
+        },
+        "sharri": {
+            "I": 2,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 4
+        },
+        "daniel": {
+            "I": 2,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 6
+        },
+        "leland": {
+            "I": 2,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 6
+        },
+        "landon": {
+            "I": 2,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 6
+        },
+        "miller": {
+            "I": 2,
             "gbar_K": 36,
             "V_zero": -10,
             "Cm": 1,
@@ -24,20 +96,8 @@
             "gbar_Na": 120,
             "nlights": 5
         },
-        "third": {
-            "I": 0,
-            "gbar_K": 36,
-            "V_zero": -10,
-            "Cm": 1,
-            "E_K": -12,
-            "E_Na": 115,
-            "gbar_l": 0.3,
-            "E_l": 10.613,
-            "gbar_Na": 120,
-            "nlights": 5
-        },
-        "fourth": {
-            "I": 0,
+        "tala": {
+            "I": 2,
             "gbar_K": 36,
             "V_zero": -10,
             "Cm": 1,
@@ -51,24 +111,84 @@
     },
     "synapses": {
         "sfirst": [{
-            "nlights": 17,
+            "nlights": 10,
             "length": 340,
             "weight": 0.05,
             "reverse": true
-        }, "first", "second"],
+        }, "first", "steven"],
         "ssecond": [{
-            "nlights": 7,
-            "length": 70,
-            "weight": 0.5,
+            "nlights": 3,
+            "length": 340,
+            "weight": 0.05,
             "reverse": true
-        }, "second", "third"],
+        }, "steven", "james"],
         "sthird": [{
-            "nlights": 13,
-            "length": 130,
-            "weight": 0.5,
+            "nlights": 8,
+            "length": 340,
+            "weight": 0.05,
             "reverse": true
-        }, "third", "fourth"]
+        }, "james", "sharri"],
+        "sfourth": [{
+            "nlights": 4,
+            "length": 340,
+            "weight": 0.05,
+            "reverse": true
+        }, "sharri", "daniel"],
+        "sfifth": [{
+            "nlights": 14,
+            "length": 340,
+            "weight": 0.05,
+            "reverse": true
+        }, "daniel", "leland"],
+        "ssixth": [{
+            "nlights": 9,
+            "length": 340,
+            "weight": 0.05,
+            "reverse": true
+        }, "leland", "daniel"],
+        "sseventh": [{
+            "nlights": 10,
+            "length": 340,
+            "weight": 0.05,
+            "reverse": true
+        }, "daniel", "steven"],
+        "seighth": [{
+            "nlights": 10,
+            "length": 340,
+            "weight": 0.05,
+            "reverse": true
+        }, "steven", "landon"],
+        "sninth": [{
+            "nlights": 6,
+            "length": 340,
+            "weight": 0.05,
+            "reverse": true
+        }, "landon", "sharri"],
+        "stenth": [{
+            "nlights": 6,
+            "length": 340,
+            "weight": 0.05,
+            "reverse": true
+        }, "sharri", "daniel"],
+        "seleventh": [{
+            "nlights": 2,
+            "length": 340,
+            "weight": 0.05,
+            "reverse": true
+        }, "daniel", "miller"],
+        "stwelth": [{
+            "nlights": 18,
+            "length": 340,
+            "weight": 0.05,
+            "reverse": true
+        }, "miller", "leland"],
+        "sthirtheenth": [{
+            "nlights": 3,
+            "length": 340,
+            "weight": 0.05,
+            "reverse": true
+        }, "leland", "tala"]
     },
     "dT": 0.04,
-    "keyorder": ["sfirst", "second", "ssecond", "third", "sthird"]
+    "keyorder": ["sfirst", "second", "ssecond", "james", "sthird", "sfourth", "daniel", "sfifth", "leland", "ssixth", "sseventh", "steven", "seighth", "landon", "sninth", "sharri", "stenth", "miller", "seleventh", "stwelth", "tala" ]
 }
