@@ -155,7 +155,7 @@
             "E_l": 10.613,
             "gbar_Na": 120,
             "nlights": 0
-        },
+        }
     },
     "synapses": {
         "1": [{
@@ -361,7 +361,7 @@
             "length": 230,
             "weight": 0.05,
             "reverse": true
-        }, "CxM", "DG"],
+        }, "CxM", "DG"]
     },
     "dT": 0.04,
     "keyorder": []
