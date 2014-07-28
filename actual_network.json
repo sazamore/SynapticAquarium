@@ -1,0 +1,368 @@
+{
+    "neurons": {
+        "Thalmus": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 0
+        },
+        "CxR": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 0
+        },
+        "CxM": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 0
+        },
+        "CxL": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 0
+        },
+        "CP": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 0
+        },
+        "GPe": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 0
+        },
+        "GPi": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 0
+        },
+        "STN": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 0
+        },
+        "SN": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 0
+        },
+        "NAcc": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 0
+        },
+        "VTA": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 0
+        },
+        "DG": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 0
+        },
+        "Amyg": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 0
+        },
+    },
+    "synapses": {
+        "1": [{
+            "nlights": 24,
+            "length": 240,
+            "weight": 0.05,
+            "reverse": true
+        }, "Thalmus", "CxR"],
+        "2": [{
+            "nlights": 13,
+            "length": 130,
+            "weight": 0.05,
+            "reverse": true
+        }, "CxR", "CxM"],
+        "3": [{
+            "nlights": 13,
+            "length": 130,
+            "weight": 0.05,
+            "reverse": true
+        }, "CxM", "CxL"],
+        "4": [{
+            "nlights": 16,
+            "length": 160,
+            "weight": 0.05,
+            "reverse": true
+        }, "CxL", "CxM"],
+        "5": [{
+            "nlights": 34,
+            "length": 340,
+            "weight": 0.05,
+            "reverse": true
+        }, "CxM", "Thalmus"],
+        "6": [{
+            "nlights": 18,
+            "length": 180,
+            "weight": 0.05,
+            "reverse": true
+        }, "Thalmus", "CP"],
+        "7": [{
+            "nlights": 25,
+            "length": 250,
+            "weight": 0.05,
+            "reverse": true
+        }, "CP", "GPe"],
+        "8": [{
+            "nlights": 11,
+            "length": 110,
+            "weight": 0.05,
+            "reverse": true
+        }, "GPe", "STN"],
+        "9": [{
+            "nlights": 14,
+            "length": 110,
+            "weight": 0.05,
+            "reverse": true
+        }, "STN", "GPe"],
+        "10": [{
+            "nlights": 30,
+            "length": 300,
+            "weight": 0.05,
+            "reverse": true
+        }, "GPe", "GPi"],
+        "11": [{
+            "nlights": 15,
+            "length": 150,
+            "weight": 0.05,
+            "reverse": true
+        }, "GPi", "CP"],
+        "12": [{
+            "nlights": 12,
+            "length": 120,
+            "weight": 0.05,
+            "reverse": true
+        }, "CP", "SN"],
+        "13": [{
+            "nlights": 12,
+            "length": 120,
+            "weight": 0.05,
+            "reverse": true
+        }, "SN", "NAcc"],
+        "14 ": [{
+            "nlights": 16,
+            "length": 160,
+            "weight": 0.05,
+            "reverse": true
+        }, "NAcc", "SN"],
+        "15 ": [{
+            "nlights": 16,
+            "length": 160,
+            "weight": 0.05,
+            "reverse": true
+        }, "SN", "CP"],
+        "16 ": [{
+            "nlights": 12,
+            "length": 160,
+            "weight": 0.05,
+            "reverse": true
+        }, "CP", "VTA"],
+        "17 ": [{
+            "nlights": 27,
+            "length": 270,
+            "weight": 0.05,
+            "reverse": true
+        }, "VTA", "DG"],
+        "18 ": [{
+            "nlights": 20,
+            "length": 200,
+            "weight": 0.05,
+            "reverse": true
+        }, "DG", "CA3"],
+        "19 ": [{
+            "nlights": 14,
+            "length": 140,
+            "weight": 0.05,
+            "reverse": true
+        }, "CA3", "CA1"],
+        "20 ": [{
+            "nlights": 22,
+            "length": 220,
+            "weight": 0.05,
+            "reverse": true
+        }, "CA1", "CxL"],
+        "21 ": [{
+            "nlights": 39,
+            "length": 390,
+            "weight": 0.05,
+            "reverse": true
+        }, "CxL", "NAcc"],
+        "22 ": [{
+            "nlights": 11,
+            "length": 110,
+            "weight": 0.05,
+            "reverse": true
+        }, "NAcc", "VTA"],
+        "23 ": [{
+            "nlights": 17,
+            "length": 170,
+            "weight": 0.05,
+            "reverse": true
+        }, "VTA", "Amyg"],
+        "KenGriffy": [{
+            "nlights": 33,
+            "length": 170,
+            "weight": 0.05,
+            "reverse": true
+        }, "Amyg", "CxR"],
+        "25 ": [{
+            "nlights": 20,
+            "length": 170,
+            "weight": 0.05,
+            "reverse": true
+        }, "CxL", "CxR"],
+        "26 ": [{
+            "nlights": 36,
+            "length": 170,
+            "weight": 0.05,
+            "reverse": true
+        }, "CxL", "NAcc"],
+        "27 ": [{
+            "nlights": 8,
+            "length": 80,
+            "weight": 0.05,
+            "reverse": true
+        }, "NAcc", "Amyg"],
+        "28 ": [{
+            "nlights": 22,
+            "length": 220,
+            "weight": 0.05,
+            "reverse": true
+        }, "Amyg", "Thalmus"],
+        "29 ": [{
+            "nlights": 32,
+            "length": 320,
+            "weight": 0.05,
+            "reverse": true
+        }, "Thalmus", "GPi"],
+        "30 ": [{
+            "nlights": 21,
+            "length": 260,
+            "weight": 0.05,
+            "reverse": true
+        }, "GPi", "STN"],
+        "31 ": [{
+            "nlights": 48,
+            "length": 480,
+            "weight": 0.05,
+            "reverse": true
+        }, "STN", "CxL"],
+        "32 ": [{
+            "nlights": 46,
+            "length": 480,
+            "weight": 0.05,
+            "reverse": true
+        }, "CxL", "CP"],
+        "33": [{
+            "nlights": 52,
+            "length": 520,
+            "weight": 0.05,
+            "reverse": true
+        }, "Amyg", "CxM"],
+        "34 ": [{
+            "nlights": 23,
+            "length": 230,
+            "weight": 0.05,
+            "reverse": true
+        }, "CxM", "DG"],
+    },
+    "dT": 0.04,
+    "keyorder": []
+}

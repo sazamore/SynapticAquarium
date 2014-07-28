@@ -44,30 +44,30 @@ class Model(object):
         else:
 	        self._synapses = {}
         if keyorder:
-            self._keyorder = keyorder
+            self.keyorder = keyorder
         else:
-            self._keyorder = []
+            self.keyorder = []
         self.buf = io.BytesIO()
     def params(self):
     	return {
     		"dT": self._dT,
     		"synapses": {k: (s.params(), prekey, postkey) for k, (s, prekey, postkey) in self._synapses.items()},
     		"neurons": {k: n.params() for k, n in self._neurons.items()},
-    		"keyorder": self._keyorder[:],
+    		"keyorder": self.keyorder[:],
     	}
     def add(self, **kwargs):
         n = Neuron(**kwargs)
         k = str(uuid.uuid4())
         self._neurons[k] = n
-        self._keyorder.append(k)
+        self.keyorder.append(k)
         return (k, n)
     def header(self):
-        return self._keyorder;
+        return self.keyorder;
     def connect(self, prekey, postkey, **kwargs):
     	k = str(uuid.uuid4())
         s = Synapse(self._neurons[prekey], self._neurons[postkey], **kwargs)
         self._synapses[k] = (s, prekey, postkey)
-        self._keyorder.append(k)
+        self.keyorder.append(k)
         return s
     def step(self, bufferize=True):
         v = [self._t]
@@ -78,7 +78,7 @@ class Model(object):
         for syn, prekey, postkey in self._synapses.values():
             syn.step()
         if bufferize:
-            for k in self._keyorder:
+            for k in self.keyorder:
                 if k in self._neurons:
                     self._neurons[k].bufferize(self.buf)
                 elif k in self._synapses:
@@ -87,6 +87,24 @@ class Model(object):
             self.buf.truncate()
             self.buf.seek(0)
         return v
+    def test(self, key):
+        self.buf.seek(0)
+        for k in self.keyorder:
+            if k == key:
+                print "Found %s" % k
+                if k in self._neurons:
+                    self._neurons[k].test(self.buf)
+                elif k in self._synapses:
+                    self._synapses[k][0].test(self.buf)
+            else:
+                print "Blanking %s" % k
+                if k in self._neurons:
+                    self._neurons[k].blank(self.buf)
+                elif k in self._synapses:
+                    self._synapses[k][0].blank(self.buf)
+        self.buf.flush()
+        self.buf.truncate()
+        self.buf.seek(0)
 
 class Synapse(object):
     def __init__(self, pre, post, weight, length, reverse=True, nlights=None):
@@ -120,6 +138,16 @@ class Synapse(object):
             buf.write("".join(["\x00\x00" + clamp(v) for v in reversed(self._values)]))
         else:
             buf.write("".join(["\x00\x00" + clamp(v) for v in self._values]))
+    def test(self, buf):
+        if self._reverse:
+            buf.write("".join(["\x00\x00\xFF" for v in reversed(self._values)]))
+        else:
+            buf.write("".join(["\x00\x00\xFF" for v in self._values]))
+    def blank(self, buf):
+        if self._reverse:
+            buf.write("".join(["\x00\x00\x00" for v in reversed(self._values)]))
+        else:
+            buf.write("".join(["\x00\x00\x00" for v in self._values]))
 
 class Neuron(object):
     def alpha_n(self,v):
@@ -207,3 +235,7 @@ class Neuron(object):
 
     def bufferize(self, buf):
         buf.write(("\x00" + chr(int(max(0, min(self.V, 255)))) + "\x00") * self.nlights) #G
+    def test(self, buf):
+        buf.write(("\x00\xFF\x00") * self.nlights) #G
+    def blank(self, buf):
+        buf.write(("\x00\x00\x00") * self.nlights) #G
