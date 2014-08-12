@@ -10,7 +10,7 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "nlights": 0
+            "nlights": 15
         },
         "CxR": {
             "I": 10,
@@ -22,7 +22,7 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "nlights": 0
+            "nlights": 15
         },
         "CxM": {
             "I": 10,
@@ -34,7 +34,7 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "nlights": 0
+            "nlights": 10
         },
         "CxL": {
             "I": 10,
@@ -46,7 +46,7 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "nlights": 0
+            "nlights": 15
         },
         "CP": {
             "I": 10,
@@ -58,7 +58,7 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "nlights": 0
+            "nlights": 10
         },
         "GPe": {
             "I": 10,
@@ -70,7 +70,7 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "nlights": 0
+            "nlights": 10
         },
         "GPi": {
             "I": 10,
@@ -82,7 +82,7 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "nlights": 0
+            "nlights": 10
         },
         "STN": {
             "I": 10,
@@ -94,7 +94,7 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "nlights": 0
+            "nlights": 10
         },
         "SN": {
             "I": 10,
@@ -106,7 +106,7 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "nlights": 0
+            "nlights": 15
         },
         "NAcc": {
             "I": 10,
@@ -118,7 +118,7 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "nlights": 0
+            "nlights": 10
         },
         "VTA": {
             "I": 10,
@@ -130,7 +130,7 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "nlights": 0
+            "nlights": 5
         },
         "DG": {
             "I": 10,
@@ -142,7 +142,7 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "nlights": 0
+            "nlights": 5
         },
         "Amyg": {
             "I": 10,
@@ -154,7 +154,31 @@
             "gbar_l": 0.3,
             "E_l": 10.613,
             "gbar_Na": 120,
-            "nlights": 0
+            "nlights": 10
+        },
+        "CA1": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 5
+        },
+        "CA3": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 5
         }
     },
     "synapses": {
@@ -189,7 +213,7 @@
             "reverse": true
         }, "CxM", "Thalmus"],
         "6": [{
-            "nlights": 18,
+            "nlights": 17,
             "length": 180,
             "weight": 0.05,
             "reverse": true
@@ -363,6 +387,8 @@
             "reverse": true
         }, "CxM", "DG"]
     },
-    "dT": 0.04,
-    "keyorder": []
+    "dT": 0.02,
+    "keyorder": ["Thalmus",    "1",    "CxR",  "2",    "CxM",      "3",    "CxL",      "4",    "5",
+                 "6",          "CP",   "7",    "8",    "STN",      "9",    "GPe",      "10",   "GPi",  "11"
+                 ]
 }

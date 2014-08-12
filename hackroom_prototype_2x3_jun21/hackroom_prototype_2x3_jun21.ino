@@ -19,10 +19,10 @@
 #define debug(x) 
 #endif
 
-#define UDP_TX_PACKET_MAX_SIZE 1500 //increase UDP size
+#define UDP_TX_PACKET_MAX_SIZE 8996 //increase UDP size
 #include <SPI.h>
 
-#define NUM_LEDS 148
+#define NUM_LEDS 921
 #define LED_PIN 22
 
 /*
@@ -56,17 +56,17 @@ void setup() {
   debug("Starting Test.\n");
   strip.begin();
   for (int i = 0; i < NUM_LEDS; i++) {
-    strip.setPixelColor(i, 0xFF0000);
+    strip.setPixelColor(i, 0x440000);
   }
   strip.show();
   delay(1000);
   for (int i = 0; i < NUM_LEDS; i++) {
-    strip.setPixelColor(i, 0x00FF00);
+    strip.setPixelColor(i, 0x004400);
   }
   strip.show();
   delay(1000);
   for (int i = 0; i < NUM_LEDS; i++) {
-    strip.setPixelColor(i, 0x0000FF);
+    strip.setPixelColor(i, 0x000044);
   }
   strip.show();
   delay(1000);
@@ -91,6 +91,7 @@ void loop() {
      frames++;
      debug("Received a packet of size: ");
      debug(packetSize);
+     debug("\n");
      /*
      debug("Printing packet contents");
      for (int i = 0; i < packetSize - 1; i++) {

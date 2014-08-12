@@ -23,7 +23,8 @@ parser.add_argument("-t", "--time", type=float, default=5, action="store", metav
 parser.add_argument("--test", action="store_true", help="Display a test pattern.")
 mg = parser.add_mutually_exclusive_group()
 mg.add_argument("-o", "--output", type=argparse.FileType('w'), default=None, help="Stream model output to here")
-mg.add_argument("-u", "--udphost", type=str, default=None, help="host:port to send UDP packets to")
+mg.add_argument("-u", "--udphost", type=str, default="10.10.32.1:9999", 
+                                   help="host:port to send UDP packets to")
 mg.add_argument("--tcphost", type=str, default=None, help="host:port to send TCP packets to")
 
 def random_network():
@@ -80,19 +81,21 @@ def main():
     else:
     	sock = None
     	host, port = (None, None)
-    stime = time.clock() # start time
+    stime = time.time() # start time
     nsteps = 0;
     nbytes = 0;
     if gargs.test:
+        print "TESTING"
         while True:
-            for k in m.keyorder:
+            for k in chan:
                 print "Testing %s" % k
                 m.test(k)
                 output(m)
-                time.sleep(0.5)
+                time.sleep(1.5)
     else:
+        print "RUNNING"
         try:
-            while time.clock() - stime < gargs.time:
+            while time.time() - stime < gargs.time:
                 if gargs.limit is not None:
                     time.sleep(1./gargs.limit)
                 m.step()
@@ -105,7 +108,7 @@ def main():
             print "FAILURE! %r" % e
             traceback.print_exc()
 
-    ttime = time.clock() - stime
+    ttime = time.time() - stime
     bps = nbytes / ttime
     if bps > 1024:
     	bpsstr = "%fKiB" % (bps / 1024)
