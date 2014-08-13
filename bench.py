@@ -87,7 +87,7 @@ def main():
     if gargs.test:
         print "TESTING"
         while True:
-            for k in chan:
+            for k in m.keyorder:
                 print "Testing %s" % k
                 m.test(k)
                 output(m)

@@ -1,29 +1,26 @@
 
 #include <Ethernet.h>
-#include <EthernetUdp.h>::w
-
-#include <EthernetServer.h>
-#include <Ethernet.h>
-#include <Dhcp.h>
-#include <EthernetClient.h>
 #include <EthernetUdp.h>
+
 #include <Dns.h>
 
 #include <Adafruit_NeoPixel.h>
 
-//#define DEBUG 
-
+#define DEBUG 
 #ifdef DEBUG
 #define debug(x) Serial.print(x)
 #else
 #define debug(x) 
 #endif
 
-#define UDP_TX_PACKET_MAX_SIZE 8996 //increase UDP size
+//#define UDP_TX_PACKET_MAX_SIZE 1986 //Bigger than this and it appears the arduino just drops them.
 #include <SPI.h>
-
-#define NUM_LEDS 921
 #define LED_PIN 22
+
+#define NUM_LEDS 1000 // Actually 992
+
+#define PACKET_SIZE (NUM_LEDS / 250) + 4
+char packetBuffer[PACKET_SIZE];    // Buffer for incoming UDP packets
 
 /*
  * Setup the one LED strip:
@@ -45,11 +42,28 @@ byte mac[] = {
 IPAddress ip(10, 10, 32, 1);
 unsigned int port = 9999;
 
+//EthernetServer server = EthernetServer(9999);
+
 /* UDP Setup */
 EthernetUDP udp;
-char packetBuffer[UDP_TX_PACKET_MAX_SIZE];    // Buffer for incoming UDP packets
+
+
+
+
+/* Frame Buffer Setup */
+char frameBuffer[NUM_LEDS * 3];
+int prev_offset = 0;
+
+int packet = 0;
 
 void setup() {
+  for (int i = 0; i < NUM_LEDS; i++) {
+    frameBuffer[i] = 0xFF;
+    frameBuffer[i+1] = 0x00;
+    frameBuffer[i+2] = 0xFF;
+  }
+  
+  
   // Initialize LED Strip
   // Initialize Serial
   Serial.begin(9600);
@@ -75,23 +89,107 @@ void setup() {
   Ethernet.begin(mac, ip);
   udp.begin(port);
   
+  //server.begin();
+  
   // Initialize Serial
   Serial.begin(9600);
   debug("listening.\n");
 }
 
 void loop() {
+  int packet_size = udp.parsePacket();
+  if (packet_size) {
+    udp.read(packetBuffer, PACKET_SIZE); 
+  }
+  
+  for (int i = 0; i < NUM_LEDS; i++) {
+    strip.setPixelColor(i, strip.Color(packetBuffer[(i * 3)],
+                                       packetBuffer[(i * 3) + 1],
+                                       packetBuffer[(i * 3) + 2]));     
+  }
+  strip.show();
+}  
+  // Read a TCP packet if available
+  /*EthernetClient client = server.available();
+  if (client) {
+    size_t bytes_read = client.read(packetBuffer, 10000);*/
+  
+    
+       
+    //debug("bytes_read = ");
+    //debug(bytes_read);
+    //debug("\n");
+    /*debug("buffer = { ");
+    for (int i = 0; i < bytes_read; i++) {
+      debug(packetBuffer[i]);
+      debug(", ");
+    }
+    debug("\n")*/;
+    /*if (bytes_read > 0) {
+      memcpy(frameBuffer, packetBuffer, bytes_read);
+    }*/
+ 
+  //client.stop();
+  
+
+  
+  
+  /*int b = 0;
+  char byte_ = client.read();
+  while (byte_ != -1) {
+    packetBuffer[b] = byte_;
+    byte_ = client.read();
+    b++;
+    // TODO: Deal with overflowing the buffer
+  }*/
+    
+
+    
+  /*   packet++;
+     //udp.read(packetBuffer, UDP_TX_PACKET_MAX_SIZE);
+    
+     
+    // Copy from packet into frame buffer
+    // (i is in bytes)
+    int offset = prev_offset;
+    debug("Starting copy, prev_offset =");
+    debug(prev_offset);
+    debug("\n");
+    int j = 0;
+    for (int i = 0; i < packetSize - 1; i++) {
+      frameBuffer[offset + i] = packetBuffer[i];
+     
+      // Flip offset in frameBuffer (within this trip through loop)
+      if (offset + i == NUM_LEDS - 1) {
+        debug("Flipping offset, i = ");
+        debug(i);
+        debug("\n");
+        offset = 0;
+      }
+      
+      // Setup offset for next trip through loop
+      /*if (i == packetSize - 2) {
+        debug("End of packet copy\n");
+        prev_offset = offset + i;
+      }*\/
+    }
+  }*/
+  
+  // Copy from framebuffer to lights
+  // (i is in LEDs)
+  
+  
+  /*
   // Read a UDP packet if available
   int packetSize = udp.parsePacket();
   int frames = 0;
   int lastPacket = 0;
-  if (packetSize > 0) {
+  if (packetSize > 0)
      udp.read(packetBuffer, UDP_TX_PACKET_MAX_SIZE);
      lastPacket = frames;
      frames++;
      debug("Received a packet of size: ");
      debug(packetSize);
-     debug("\n");
      /*
      debug("Printing packet contents");
      for (int i = 0; i < packetSize - 1; i++) {
@@ -99,7 +197,7 @@ void loop() {
         debug(", ");
      }
      debug(packetBuffer[packetSize - 1], DEC);
-     */
+     *\/  
      for (int i = 0; i < NUM_LEDS; i++) {
        /*
        debug("Setting Color for Pixel ");
@@ -110,7 +208,7 @@ void loop() {
        debug(packetBuffer[i * 3 + 1]);
        debug(",");
        debug(packetBuffer[i * 3 + 2]);
-       */
+       *\/
        strip.setPixelColor(i, strip.Color(packetBuffer[(i * 3)],
                                           packetBuffer[(i * 3) + 1],
                                           packetBuffer[(i * 3) + 2]));
@@ -120,7 +218,7 @@ void loop() {
     if (frames % 1000) {
       debug(".");
     }
-  }
+  }*/
 
   
   /*
@@ -144,4 +242,3 @@ void loop() {
   }
   strip.show();
   */
-}
