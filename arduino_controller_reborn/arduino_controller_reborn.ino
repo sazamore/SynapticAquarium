@@ -69,9 +69,7 @@ void set_frame_solid_color(byte color[]) {
 void setup() {
   byte test_color[3];
    
-  #ifdef DEBUG
-    Serial.begin(9600);
-  #endif
+  Serial.begin(9600);
 
   debug("Starting test\n");
 
@@ -104,7 +102,11 @@ void loop() {
   // Create a client TCP connection
   EthernetClient client = server.available();
   if (client && client.connected() and client.available()) {
-    packet_size = client.read((uint8_t *)packet_buffer, MAX_PACKET_SIZE + 1);
+    packet_frame_section = client.read();
+    //unsigned long pre_read_millis = millis();
+    packet_size = client.read((uint8_t *)packet_buffer, MAX_PACKET_SIZE);
+    //Serial. print("Read time = ");
+    //Serial.print(millis() - pre_read_millis);
     packet_frame_section = packet_buffer[0];
     debug("Received a packet of size ");
     debug(packet_size);
@@ -121,7 +123,7 @@ void loop() {
     debug(MAX_PACKET_SIZE * packet_frame_section);
     debug("\n");
     memcpy(frame_buffer + (MAX_PACKET_SIZE * packet_frame_section),
-      packet_buffer + 1, packet_size);
+      packet_buffer, packet_size);
     super_debug("\tFirst eight bytes of updated part = [");
     for (int i = 0; i < 8; i++) {
       super_debug(frame_buffer[(MAX_PACKET_SIZE * packet_frame_section) + i]);
