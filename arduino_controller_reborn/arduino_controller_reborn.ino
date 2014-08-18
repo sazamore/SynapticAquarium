@@ -103,10 +103,7 @@ void loop() {
   EthernetClient client = server.available();
   if (client && client.connected() and client.available()) {
     packet_frame_section = client.read();
-    //unsigned long pre_read_millis = millis();
     packet_size = client.read((uint8_t *)packet_buffer, MAX_PACKET_SIZE);
-    //Serial. print("Read time = ");
-    //Serial.print(millis() - pre_read_millis);
     packet_frame_section = packet_buffer[0];
     debug("Received a packet of size ");
     debug(packet_size);
