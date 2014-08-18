@@ -78,7 +78,7 @@ void setup() {
   /* Initialize frame buffer and test LEDs */
   strip.begin(); 
   test_color = { 0x44, 0x00, 0x00 };
-  set_frame_soliq  d_color(test_color);
+  set_frame_solid_color(test_color);
   delay(1000);
   test_color = { 0x00, 0x44, 0x00 };
   set_frame_solid_color(test_color);
