@@ -105,29 +105,35 @@ void loop() {
   EthernetClient client = server.available();
   if (client && client.connected() and client.available()) {
     packet_frame_section = client.read();
-    packet_size = client.read((uint8_t *)packet_buffer, MAX_PACKET_SIZE);
-    debug("Received a packet of size ");
-    debug(packet_size);
-    super_debug(".\n");
-    super_debug("\tFirst eight bytes of packet = [");
-    for (int i = 0; i < 8; i++) {
-      super_debug(packet_buffer[i]);
-      super_debug(", ");
+
+      packet_size = client.read(
+        (uint8_t *)(frame_buffer + (MAX_PACKET_SIZE * packet_frame_section)),
+        MAX_PACKET_SIZE);
+        //(uint8_t *)packet_buffer, MAX_PACKET_SIZE);
+      debug("Received a packet of size ");
+      debug(packet_size);
+      super_debug(".\n");
+      super_debug("\tFirst eight bytes of packet = [");
+      for (int i = 0; i < 8; i++) {
+        super_debug(packet_buffer[i]);
+        super_debug(", ");
+      }
+      debug("]\n");
+      debug("Updating frame_section ");
+      debug(packet_frame_section);
+      debug(" at frame_buffer offset = ");
+      debug(MAX_PACKET_SIZE * packet_frame_section);
+      debug("\n");
+      /*memcpy(frame_buffer + (MAX_PACKET_SIZE * packet_frame_section),
+        packet_buffer, packet_size);*/
+      super_debug("\tFirst eight bytes of updated part = [");
+      for (int i = 0; i < 8; i++) {
+        super_debug(frame_buffer[(MAX_PACKET_SIZE * packet_frame_section) + i]);
+        super_debug(", ");
+      }
+      super_debug("]\n");
+    if (packet_frame_section == 7) {
+      update_leds();
     }
-    debug("]\n");
-    debug("Updating frame_section ");
-    debug(packet_frame_section);
-    debug(" at frame_buffer offset = ");
-    debug(MAX_PACKET_SIZE * packet_frame_section);
-    debug("\n");
-    memcpy(frame_buffer + (MAX_PACKET_SIZE * packet_frame_section),
-      packet_buffer, packet_size);
-    super_debug("\tFirst eight bytes of updated part = [");
-    for (int i = 0; i < 8; i++) {
-      super_debug(frame_buffer[(MAX_PACKET_SIZE * packet_frame_section) + i]);
-      super_debug(", ");
-    }
-    super_debug("]\n");
-    update_leds();
   }
 }
