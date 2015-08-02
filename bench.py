@@ -10,6 +10,7 @@ import io
 import traceback
 import json
 import socket
+import serial
 gargs = None # Global arguments
 
 parser = argparse.ArgumentParser(description="Make the synaq go as fast as it can.")
@@ -20,12 +21,13 @@ parser.add_argument("-c", "--connectivity", type=int, action="store", default=6,
 parser.add_argument("-M", "--maxlen", type=int, default=20, action="store", help="Maximum synapse length")
 parser.add_argument("-m", "--minlen", type=int, default=5, action="store", help="Minimum synapse length")
 parser.add_argument("-t", "--time", type=float, default=5, action="store", metavar="S", help="How long to run the model")
+parser.add_argument("-b", "--baud", type=int, default=9600, action="store", metavar="baud", help="Baud rate to open serial port")
 parser.add_argument("--test", action="store_true", help="Display a test pattern.")
 mg = parser.add_mutually_exclusive_group()
-mg.add_argument("-o", "--output", type=argparse.FileType('w'), default=None, help="Stream model output to here")
-mg.add_argument("-u", "--udphost", type=str, default="10.10.32.1:9999", 
+mg.add_argument("--output", type=argparse.FileType('w'), default=None, help="Stream model output to here")
+mg.add_argument("--udphost", type=str, default=None, 
                                    help="host:port to send UDP packets to")
-mg.add_argument("--tcphost", type=str, default=None, help="host:port to send TCP packets to")
+mg.add_argument("--serial", type=str, default=None, help="Stream model output to serial port")
 
 def random_network():
     m = Model(dT=0.0001)
@@ -40,7 +42,7 @@ def random_network():
     		while not postkey or postkey is prekey:
     			postkey = random.choice(nkeys)
     		weight = random.random() * 2 - 1
-    		length = random.randint(1, gargs.maxlen)
+    		length = random.randint(gargs.minlen, gargs.maxlen)
     		#print("Connecting %s->%s weight %f length %d" % (prekey, postkey, weight, length))
     		m.connect(prekey, postkey, weight=weight, length=length)
     		nconns += 1
@@ -49,6 +51,7 @@ def random_network():
 sock = None
 host = None
 port = None
+serport = None
 
 def output(model):
     data = model.buf.read()
@@ -59,11 +62,18 @@ def output(model):
         gargs.output.write(d)
     elif gargs.udphost: # send over sock to host, port via UDP
         sock.sendto(data, (host, port))
+    elif gargs.serial:
+        serport.write(data)
+        """
+        resp = serport.read(9999)
+        if resp:
+            print repr(resp);
+        """
     else: # Don't bother reading
         model.buf.seek(0, io.SEEK_END)
 
 def main():
-    global gargs, sock, host, port
+    global gargs, sock, host, port, serport
     gargs = parser.parse_args()
     if gargs.input:
     	m = Model(**json.load(gargs.input))
@@ -74,13 +84,8 @@ def main():
     	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     	host, port = gargs.udphost.split(":")
     	port = int(port)
-    elif gargs.tcphost:
-    	raise NotImplementedException("Can't do TCP yet")
-    	# TODO: set sock
-    	host, port = (None, None)
-    else:
-    	sock = None
-    	host, port = (None, None)
+    if gargs.serial:
+        serport = serial.Serial(port=gargs.serial, baudrate=gargs.baud, timeout=0)
     stime = time.time() # start time
     nsteps = 0;
     nbytes = 0;
@@ -97,14 +102,16 @@ def main():
         try:
             while time.time() - stime < gargs.time:
                 if gargs.limit is not None:
-                    time.sleep(1./gargs.limit)
+                    time.sleep(1. / gargs.limit)
                 m.step()
                 for _ in xrange(10):
                     m.step(bufferize=False)
                 output(m)
                 nbytes += m.buf.tell()
                 nsteps += 1
-        except (Exception, KeyboardInterrupt) as e: 
+        except KeyboardInterrupt:
+            print "Keyboard interrupt. Exiting";
+        except Exception as e: 
             print "FAILURE! %r" % e
             traceback.print_exc()
 

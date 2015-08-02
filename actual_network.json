@@ -179,6 +179,30 @@
             "E_l": 10.613,
             "gbar_Na": 120,
             "nlights": 5
+        },
+        "VIS": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 5
+        },
+        "V1": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 5
         }
     },
     "synapses": {
@@ -260,61 +284,61 @@
             "weight": 0.05,
             "reverse": true
         }, "SN", "NAcc"],
-        "14 ": [{
+        "14": [{
             "nlights": 16,
             "length": 160,
             "weight": 0.05,
             "reverse": true
         }, "NAcc", "SN"],
-        "15 ": [{
+        "15": [{
             "nlights": 16,
             "length": 160,
             "weight": 0.05,
             "reverse": true
         }, "SN", "CP"],
-        "16 ": [{
+        "16": [{
             "nlights": 12,
             "length": 160,
             "weight": 0.05,
             "reverse": true
         }, "CP", "VTA"],
-        "17 ": [{
+        "17": [{
             "nlights": 27,
             "length": 270,
             "weight": 0.05,
             "reverse": true
         }, "VTA", "DG"],
-        "18 ": [{
+        "18": [{
             "nlights": 20,
             "length": 200,
             "weight": 0.05,
             "reverse": true
         }, "DG", "CA3"],
-        "19 ": [{
+        "19": [{
             "nlights": 14,
             "length": 140,
             "weight": 0.05,
             "reverse": true
         }, "CA3", "CA1"],
-        "20 ": [{
+        "20": [{
             "nlights": 22,
             "length": 220,
             "weight": 0.05,
             "reverse": true
         }, "CA1", "CxL"],
-        "21 ": [{
+        "21": [{
             "nlights": 39,
             "length": 390,
             "weight": 0.05,
             "reverse": true
         }, "CxL", "NAcc"],
-        "22 ": [{
+        "22": [{
             "nlights": 11,
             "length": 110,
             "weight": 0.05,
             "reverse": true
         }, "NAcc", "VTA"],
-        "23 ": [{
+        "23": [{
             "nlights": 17,
             "length": 170,
             "weight": 0.05,
@@ -326,49 +350,49 @@
             "weight": 0.05,
             "reverse": true
         }, "Amyg", "CxR"],
-        "25 ": [{
+        "25": [{
             "nlights": 20,
             "length": 170,
             "weight": 0.05,
             "reverse": true
         }, "CxL", "CxR"],
-        "26 ": [{
+        "26": [{
             "nlights": 36,
             "length": 170,
             "weight": 0.05,
             "reverse": true
         }, "CxL", "NAcc"],
-        "27 ": [{
+        "27": [{
             "nlights": 8,
             "length": 80,
             "weight": 0.05,
             "reverse": true
         }, "NAcc", "Amyg"],
-        "28 ": [{
+        "28": [{
             "nlights": 22,
             "length": 220,
             "weight": 0.05,
             "reverse": true
         }, "Amyg", "Thalmus"],
-        "29 ": [{
+        "29": [{
             "nlights": 32,
             "length": 320,
             "weight": 0.05,
             "reverse": true
         }, "Thalmus", "GPi"],
-        "30 ": [{
+        "30": [{
             "nlights": 21,
             "length": 260,
             "weight": 0.05,
             "reverse": true
         }, "GPi", "STN"],
-        "31 ": [{
+        "31": [{
             "nlights": 48,
             "length": 480,
             "weight": 0.05,
             "reverse": true
         }, "STN", "CxL"],
-        "32 ": [{
+        "32": [{
             "nlights": 46,
             "length": 480,
             "weight": 0.05,
@@ -380,15 +404,115 @@
             "weight": 0.05,
             "reverse": true
         }, "Amyg", "CxM"],
-        "34 ": [{
+        "34": [{
             "nlights": 23,
             "length": 230,
             "weight": 0.05,
             "reverse": true
-        }, "CxM", "DG"]
+        }, "CxM", "DG"],
+        "35": [{
+            "nlights": 19,
+            "length": 190,
+            "weight": 0.05,
+            "reverse": true
+        }, "Vis", "V1"],
+        "36": [{
+            "nlights": 26,
+            "length": 260,
+            "weight": 0.05,
+            "reverse": true
+        }, "V1", "V2"],
+        "37": [{
+            "nlights": 10,
+            "length": 100,
+            "weight": 0.05,
+            "reverse": true
+        }, "V2", "V3"],
+        "38": [{
+            "nlights": 24,
+            "length": 240,
+            "weight": 0.05,
+            "reverse": true
+        }, "V3", "Vis"],
+        "39": [{
+            "nlights": 17,
+            "length": 170,
+            "weight": 0.05,
+            "reverse": true
+        }, "Vis", "V2"],
+        "40": [{
+            "nlights": 35,
+            "length": 350,
+            "weight": 0.05,
+            "reverse": true
+        }, "Vis", "Thal"],
+        "41": [{
+            "nlights": 38,
+            "length": 380,
+            "weight": 0.05,
+            "reverse": true
+        }, "Thal", "SL"],
+        "42": [{
+            "nlights": 15,
+            "length": 150,
+            "weight": 0.05,
+            "reverse": true
+        }, "SR", "Thal"],
+        "43": [{
+            "nlights": 33,
+            "length": 330,
+            "weight": 0.05,
+            "reverse": true
+        }, "Thal", "Kyle"],
+        "44": [{
+            "nlights": 17,
+            "length": 170,
+            "weight": 0.00,
+            "reverse": true
+        }, "Kyle", "Thal"]
     },
     "dT": 0.02,
-    "keyorder": ["Thalmus",    "1",    "CxR",  "2",    "CxM",      "3",    "CxL",      "4",    "5",
-                 "6",          "CP",   "7",    "8",    "STN",      "9",    "GPe",      "10",   "GPi",  "11"
-                 ]
+    "keyorder": ["Thalmus",    
+    "1",    
+        "CxR",  
+    "2",    
+        "CxM",      
+    "3",    
+        "CxL",      
+    "4", "5", "6",          
+        "CP",   
+    "7", "8",    
+        "STN",      
+    "9",    
+        "GPe",      
+    "10",   
+        "GPi",  
+    "11", "12",
+        "SN",
+    "13",
+        "NAcc",
+    "14",
+    "15",
+    "16",
+        "VTA",
+    "17",
+        "DG",
+    "18",
+        "CA3",
+    "19",
+        "CA1",
+    "20", "21", "22", "23", "KenGriffy", "25", "26", "27", 
+        "Amyg",
+    "28", "29", "30", "31", "32", "33", "34",
+        "Vis", 
+    "35", 
+        "V1", 
+    "36", 
+        "V2", 
+    "37", 
+        "V3",
+    "38", "39", "40", "41", 
+    "SL", "SR", 
+    "42", "43", "Kyle", "44"
+     ]
 }
