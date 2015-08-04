@@ -180,7 +180,7 @@
             "gbar_Na": 120,
             "nlights": 5
         },
-        "VIS": {
+        "Vis": {
             "I": 10,
             "gbar_K": 36,
             "V_zero": -10,
@@ -193,6 +193,66 @@
             "nlights": 5
         },
         "V1": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 5
+        },
+        "V2": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 5
+        },
+        "V3": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 5
+        },
+        "Kyle": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 5
+        },
+        "SR": {
+            "I": 10,
+            "gbar_K": 36,
+            "V_zero": -10,
+            "Cm": 1,
+            "E_K": -12,
+            "E_Na": 115,
+            "gbar_l": 0.3,
+            "E_l": 10.613,
+            "gbar_Na": 120,
+            "nlights": 5
+        },
+        "SL": {
             "I": 10,
             "gbar_K": 36,
             "V_zero": -10,
@@ -445,31 +505,31 @@
             "length": 350,
             "weight": 0.05,
             "reverse": true
-        }, "Vis", "Thal"],
+        }, "Vis", "Thalmus"],
         "41": [{
             "nlights": 38,
             "length": 380,
             "weight": 0.05,
             "reverse": true
-        }, "Thal", "SL"],
+        }, "Thalmus", "SL"],
         "42": [{
             "nlights": 15,
             "length": 150,
             "weight": 0.05,
             "reverse": true
-        }, "SR", "Thal"],
+        }, "SR", "Thalmus"],
         "43": [{
             "nlights": 33,
             "length": 330,
             "weight": 0.05,
             "reverse": true
-        }, "Thal", "Kyle"],
+        }, "Thalmus", "Kyle"],
         "44": [{
             "nlights": 17,
             "length": 170,
             "weight": 0.00,
             "reverse": true
-        }, "Kyle", "Thal"]
+        }, "Kyle", "Thalmus"]
     },
     "dT": 0.02,
     "keyorder": ["Thalmus",    
