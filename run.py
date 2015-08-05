@@ -1,133 +1,155 @@
 #!/usr/bin/env python2.7
-
-from Neuron import Model, Neuron
-import sys
+"""
+This file creates a large synaq model, runs it as fast as it can, and tells you how fast that is.
+"""
+from Neuron import Model 
 import argparse
-import csv
-import BaseHTTPServer
-import urlparse
-import uuid
-import json
+import random
 import time
+import io
+import traceback
+import json
+import socket
+import serial
+gargs = None # Global arguments
 
-def try_parse(thing):
-    "Attempt to parse a string into an int or float. If we can't just return it"
-    try:
-        return int(thing)
-    except ValueError:
-        pass
-    try:
-        return float(thing)
-    except ValueError:
-        pass
-    return thing
+parser = argparse.ArgumentParser(description="Make the synaq go as fast as it can.")
+parser.add_argument("-i", "--input", type=argparse.FileType('r'), default=None, help="Network JSON file.")
+parser.add_argument("-l", "--limit", type=float, default=None, help="Limit FPS.")
+parser.add_argument("-n", "--num", type=int, action="store", default=100, help="Number of neurons")
+parser.add_argument("-c", "--connectivity", type=int, action="store", default=6, help="synapses per neuron")
+parser.add_argument("-M", "--maxlen", type=int, default=20, action="store", help="Maximum synapse length")
+parser.add_argument("-m", "--minlen", type=int, default=5, action="store", help="Minimum synapse length")
+parser.add_argument("-t", "--time", type=float, default=5, action="store", metavar="S", help="How long to run the model")
+parser.add_argument("-b", "--baud", type=int, default=9600, action="store", metavar="baud", help="Baud rate to open serial port")
+parser.add_argument("--test", action="store_true", help="Display a test pattern.")
+mg = parser.add_mutually_exclusive_group()
+mg.add_argument("--output", type=argparse.FileType('w'), default=None, help="Stream model output to here")
+mg.add_argument("--udphost", type=str, default=None, 
+                                   help="host:port to send UDP packets to")
+mg.add_argument("--serial", type=str, default=None, help="Stream model output to serial port")
 
-models = {} # Map of keys to model instances
-gargs = None # global arguments (from cmdline)
+def random_network():
+    m = Model(dT=0.0001)
+    nkeys = [None for _ in range(gargs.num)]
+    for i in range(gargs.num):
+    	nkeys[i], _ = m.add()
+    print("Added %d neurons.\n" % gargs.num)
+    nconns = 0
+    for prekey in nkeys:
+    	for i in range(gargs.connectivity):
+    		postkey = None
+    		while not postkey or postkey is prekey:
+    			postkey = random.choice(nkeys)
+    		weight = random.random() * 2 - 1
+    		length = random.randint(gargs.minlen, gargs.maxlen)
+    		#print("Connecting %s->%s weight %f length %d" % (prekey, postkey, weight, length))
+    		m.connect(prekey, postkey, weight=weight, length=length)
+    		nconns += 1
+    print("Added %d connections" % nconns)
+    return m
+sock = None
+host = None
+port = None
+serport = None
 
-class SARequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
-    """
-    Calls main() with output=(request wfile), and **kwargs=GET/POST parameters.
-    You should probably not deploy this on the actual internet.
-    """
-    def do_req(self, path, params):
-        global models, gargs
-        #print("got a request for %r, params %r" % (path, params))
-        model = models[params['model_id']] if 'model_id' in params else None
-        if model:
-            del params['model_id']
-        # routing
-        if not path:
-            self.send_response(200)
-            self.send_header('Content-Type', "text/html")
-            self.end_headers()
-            self.wfile.write(open("./synaq.html", 'r').read())
-        elif path[0] == 'add':
-            self.send_response(200)
-            self.send_header('Content-Type', "text/plain")
-            self.end_headers()
-            if 'steps' in params:
-               del params['steps']
-            if 'dT' in params:
-               del params['dT']
-            k, n = model.add(**params)
-            self.wfile.write(k)
-            print "Added %s" % k
-        elif path[0] == 'step':
-            self.send_response(200)
-            self.send_header('Content-Type', "application/json")
-            self.end_headers()
-            #print "Attempting to iterate %r steps" % params['steps']
-            stime = time.clock()
-            V = [model.step() for step in range(params['steps'])]
-            #print "Calculation in %fs" % (time.clock() - stime)
-            json.dump(V, self.wfile)
-        elif path[0] == 'connect':
-            self.send_response(200)
-            self.send_header('Content-Type', "text/plain")
-            self.end_headers()
-            model.connect(**params)
-        elif path[0] == 'new':
-            self.send_response(200)
-            self.send_header('Content-Type', "text/plain")
-            self.end_headers()
-            # Create a new model and add it to models
-            nu = str(uuid.uuid4())
-            models[nu] = Model(params['dT'] if 'dT' in params else gargs.dT)
-            self.wfile.write(nu)
-            print "Created %s" % nu
-        elif path[0] == 'graph':
-            self.send_response(200)
-            self.send_header('Content-Type', "application/json")
-            self.end_headers()
-            g = model.params()
-            json.dump(g, self.wfile)
-            print "Dumping", repr(g)
-        else:
-            self.send_response(404)
-            self.send_header('Content-Type', "text/plain")
-            self.end_headers()
-            self.wfile.write("nope")
-            print "GOT NONEXISTANT PAGE %r" % path
-        
-    def do_GET(self):
-        "Translate a GET request into path and a parameter map"
-        global models, gargs
-        res = urlparse.urlparse(self.path)
-        params = { # urlparse passes EVERYTHING back as a list, this extracts singletons.
-            key : try_parse(val[0]) if len(val) == 1 else val
-            for key, val in urlparse.parse_qs(res.query).iteritems()
-        }
-        # Empty strings are lame
-        path = [pe for pe in res.path.strip().split("/") if pe is not ""]
-        self.do_req(path, params)
-    def do_POST(self):
-        "Translate a POST request into path and a parameter map"
-        path = [pe for pe in self.path.strip().split("/") if pe is not ""]
-        reqf = self.rfile.read(int(self.headers['Content-Length']))
-        params = { # urlparse passes EVERYTHING back as a list, this extracts singletons.
-            key : try_parse(val[0]) if len(val) == 1 else val
-            for key, val in urlparse.parse_qs(reqf).iteritems()
-        }
-        self.do_req(path, params)
-        
+def output(model):
+    data = model.buf.read()
+    #print "Outputting %d bytes" % len(data)
+    #print repr(data)
+    if gargs.output: # write to a file
+        print(gargs.output.tell(), len(d), repr(d))
+        gargs.output.write(d)
+    elif gargs.udphost: # send over sock to host, port via UDP
+        sock.sendto(data, (host, port))
+    elif gargs.serial:
+        serport.write(data)
+        """
+        resp = serport.read(9999)
+        if resp:
+            print repr(resp);
+        """
+    else: # Don't bother reading
+        model.buf.seek(0, io.SEEK_END)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Simulate a neuron")
-    parser.add_argument("-p", '--port',     dest="port",                        type=int,   action="store",     default=3103,       help="Port to serve HTTP on")
-    parser.add_argument("-s", '--steps',    dest="steps",   metavar="N",        type=int,   action="store",     default="1000",     help="Number of steps")
-    parser.add_argument("-t",               dest="dT",      metavar="ms",       type=float, action="store",     default=.025,       help="Step interval")
-    # Parameter args
-    parser.add_argument(      '--V_zero',                   metavar="mV",       type=float, action="store",                         help="Initial V" )
-    parser.add_argument(      '--Cm',                       metavar="uF/cm2",   type=float, action="store",                         help="Membrane Capacitance")
-    parser.add_argument(      '--gbar_Na',                  metavar="mS/cm2",   type=float, action="store")
-    parser.add_argument(      '--gbar_K',                   metavar="mS/cm2",   type=float, action="store")
-    parser.add_argument(      '--gbar_l',                   metavar="mS/cm2",   type=float, action="store")
-    parser.add_argument(      '--E_Na',                     metavar="mV",       type=float, action="store")
-    parser.add_argument(      '--E_K',                      metavar="mV",       type=float, action="store")
-    parser.add_argument(      '--E_l',                      metavar="mV",       type=float, action="store")
-    parser.add_argument(      '--I',                        metavar="mA?",      type=float, action="store")
+def bytestr(nbytes):
+    if nbytes > 1024:
+        return "%fKiB" % (nbytes / 1024)
+    elif nbytes > (1024 ** 2):
+        return "%fMiB" % (nbytes / (1024 **2))
+    elif nbytes > (1024 ** 3):
+        return "%fGiB" % (nbytes / (1024 **3))
+    else:
+        return "%fb" % nbytes
+
+def main():
+    global gargs, sock, host, port, serport
     gargs = parser.parse_args()
-    server = BaseHTTPServer.HTTPServer(('', gargs.port), SARequestHandler)
-    print "Serving on port %d!" % gargs.port
-    server.serve_forever()
+    if gargs.input:
+    	m = Model(**json.load(gargs.input))
+    	print "Loaded network"
+    else:
+    	m = random_network()
+    if gargs.udphost:
+    	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    	host, port = gargs.udphost.split(":")
+    	port = int(port)
+    if gargs.serial:
+        serport = serial.Serial(port=gargs.serial, baudrate=gargs.baud, timeout=0)
+    stime = time.time() # start time
+    nsteps = 0
+    nbytes = 0
+    if gargs.test:
+        print "TESTING"
+        while True:
+            for k in m.keyorder:
+                print "Testing %s" % k
+                m.test(k)
+                output(m)
+                time.sleep(1.5)
+    else:
+        print "RUNNING\n"
+        outputtime = None # moving average of time to output 
+        simtime = None # moving average of time to simulate 
+        obps = None # moving average of output bytes/sec
+        try:
+            while time.time() - stime < gargs.time:
+                if gargs.limit is not None:
+                    time.sleep(1. / gargs.limit)
+                sbegin = time.clock()
+                m.step()
+                for _ in xrange(10):
+                    m.step(bufferize=False)
+                obegin = time.clock()
+                output(m)
+                oend = time.clock()
+
+                sbytes = m.buf.tell()
+                nbytes += sbytes
+                
+                nsteps += 1
+                if outputtime is None:
+                    outputtime = (oend - obegin)
+                if simtime is None:
+                    simtime = (obegin - sbegin)
+                if obps is None:
+                    obps = sbytes / outputtime
+                outputtime = outputtime * 0.95 + (oend - obegin) * 0.05
+                simtime = simtime * 0.95 + (obegin - sbegin) * 0.05
+                obps = obps * 0.95 + (sbytes / (oend - obegin)) 
+                if nsteps % 20 == 0:
+                    print "\rSim: %f%%\tOutput: %f%%\t%s/sec" % ((simtime) / (simtime + outputtime), (outputtime) / (simtime + outputtime), bytestr(obps))
+        except KeyboardInterrupt:
+            print "Keyboard interrupt. Exiting";
+        except Exception as e: 
+            print "FAILURE! %r" % e
+            traceback.print_exc()
+
+    ttime = time.time() - stime
+    bps = nbytes / ttime
+    print("Network of %d LEDs.\n"
+    	  "Simulated %d steps, creating %d bytes in %f seconds.\n"
+    	  "%s/sec, %f frames/sec" % 
+    	  (m.buf.tell() / 3, nsteps, nbytes, ttime, bytestr(bps), nsteps / ttime))
+if __name__ == "__main__":
+    main()

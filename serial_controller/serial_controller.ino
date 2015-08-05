@@ -1,33 +1,29 @@
+// Synaptic Aquarium hardware bridge
+// Eat data over native USB UART and make lights blink
+// Landon, 2015, Beerware license
 
-// NeoPixel Ring simple sketch (c) 2013 Shae Erisson
-// released under the GPLv3 license to match the rest of the AdaFruit NeoPixel library
-
-#include <Adafruit_NeoPixel.h>
-
+#include <FastLED.h>
 #define PIN            6
 
-#define NUM_LEDS 1190  // TODO: Get final number of LEDs
-#define FB_SIZE (NUM_LEDS * 3)
+#define NUM_LEDS 1190
+#define FB_SIZE (NUM_LEDS * sizeof(CRGB))
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_RGB + NEO_KHZ800);
-char frame_buffer[FB_SIZE];
+CRGB frame_buffer[NUM_LEDS];
 
 void setup() {
     while (!Serial);
-    strip.begin(); 
     Serial.begin(9600);
-    SerialUSB.begin(40000000);
+    SerialUSB.begin(9600);
     memset(frame_buffer, 0, FB_SIZE);
+    FastLED.addLeds<WS2812B, PIN, RGB>(frame_buffer, NUM_LEDS);
 }
 
 void loop() {
     memset(frame_buffer, 0, FB_SIZE);
     while (!SerialUSB.available());
-    int bytes_read = SerialUSB.readBytes(frame_buffer, FB_SIZE);
-    for(int i = 0; i < NUM_LEDS; i++) {
-        strip.setPixelColor(i, strip.Color(frame_buffer[(i * 3)],
-                                           frame_buffer[(i * 3) + 1],
-                                           frame_buffer[(i * 3) + 2]));
+    int bytes_read = SerialUSB.readBytes((char*)frame_buffer, FB_SIZE);
+    while (bytes_read < FB_SIZE) {
+        bytes_read += SerialUSB.readBytes(((char*)frame_buffer) + bytes_read, (FB_SIZE - bytes_read));
     }
-    strip.show(); 
+    FastLED.show(); 
 }
