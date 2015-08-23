@@ -15,6 +15,7 @@ void setup() {
     Serial.begin(9600);
     SerialUSB.begin(9600);
     memset(frame_buffer, 0, FB_SIZE);
+    SerialUSB.readBytes((char*)frame_buffer, FB_SIZE);
     FastLED.addLeds<WS2812B, PIN, RGB>(frame_buffer, NUM_LEDS);
 }
 

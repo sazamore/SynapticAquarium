@@ -13,7 +13,7 @@ ZO RELAXEN UND WATSCHEN DER BLINKENLICHTEN.
 
 @author: Sharri, Landon
 """
-#Original code from Byron Galbraith via neurdon
+# Derived from code from Byron Galbraith via neurdon
 
 
 import math
@@ -23,38 +23,66 @@ import uuid
 import struct
 import io
 import collections
+from itertools import izip, count, repeat
 # Transfer functions - take a float and return a chr
 def clamp(val):
-    return chr(int(max(min(val, 255), 0)))
+    return int(max(min(val, 255), 0))
+
+class WhatTheFuck(Exception):
+    pass
 
 class Model(object):
     def __init__(self, 
-    			 dT,  			# integration step delta
-    			 neurons=None,  # Map of key: Neuron kwargs
-    			 synapses=None, # map of key: (Synapse kwargs, pre neuron key, post neuron key)
-    			 keyorder=None):# Order that neuron or synapse values are serialized (need not be comprehensive)
+                 dT,            # integration step delta
+                 neurons=None,  # Map of key: Neuron kwargs
+                 synapses=None, # map of key: (Synapse kwargs, pre neuron key, post neuron key)
+                 keyorder=None):# Order that neuron or synapse values are serialized (need not be comprehensive)
         self._dT = dT
         self._t = 0.
         if neurons:
-        	self._neurons = {k: Neuron(**args) for k, args in neurons.items()}
+            self._neurons = {k: Neuron(**args) for k, args in neurons.items()}
         else:
-        	self._neurons = {}
+            self._neurons = {}
         if synapses:
-        	self._synapses = {k: (Synapse(self._neurons[prekey], self._neurons[postkey], **args), prekey, postkey) for k, (args, prekey, postkey) in synapses.items()}
+            self._synapses = {k: (Synapse(self._neurons[prekey], self._neurons[postkey], **args), prekey, postkey) for k, (args, prekey, postkey) in synapses.items()}
         else:
-	        self._synapses = {}
+            self._synapses = {}
         if keyorder:
             self.keyorder = keyorder
         else:
             self.keyorder = []
+        for keys, idx in izip(self.keyorder, count()):
+            if isinstance(keys, basestring):
+                thing = self.find(keys)
+                if type(thing) == Neuron:
+                    print "Keyorder entry [%d]%r is a string for a neuron. Assuming you want it green." % (idx, keys)
+                    self.keyorder[idx] = [None, keys, None]
+                elif type(thing) == Synapse:
+                    print "Keyorder entry [%d]%r is a string for a synapse. Assuming you want it blue." % (idx, keys)
+                    self.keyorder[idx] = [None, None, keys]
+                else:
+                    raise WhatTheFuck("Thing is (%r)%r. Expected Neuron or Synapse" % (type(thing), thing))
+            if len(self.keyorder[idx]) < 3:
+                self.keyorder[idx] += ([None] * len(3 - self.keyorder[keys]))
+            if len(self.keyorder[idx]) is not 3:
+                raise WhatTheFuck("Keyorder entry [%d]%r is the wrong length." % (idx, self.keyorder[idx]))
+            if not set(keyorder[idx]) - set([None]):
+                raise WhatTheFuck("Keyorder entry [%d]%r is entirely None." % (idx, self.keyorder[idx]))
         self.buf = io.BytesIO()
+    def find(self, key):
+        if key in self._neurons:
+            return self._neurons[key]
+        elif key in self._synapses:
+            return self._synapses[key][0]
+        else:
+            raise WhatTheFuck("What the fuck is %s?" % key)
     def params(self):
-    	return {
-    		"dT": self._dT,
-    		"synapses": {k: (s.params(), prekey, postkey) for k, (s, prekey, postkey) in self._synapses.items()},
-    		"neurons": {k: n.params() for k, n in self._neurons.items()},
-    		"keyorder": self.keyorder[:],
-    	}
+        return {
+            "dT": self._dT,
+            "synapses": {k: (s.params(), prekey, postkey) for k, (s, prekey, postkey) in self._synapses.items()},
+            "neurons": {k: n.params() for k, n in self._neurons.items()},
+            "keyorder": self.keyorder[:],
+        }
     def add(self, **kwargs):
         n = Neuron(**kwargs)
         k = str(uuid.uuid4())
@@ -64,7 +92,7 @@ class Model(object):
     def header(self):
         return self.keyorder;
     def connect(self, prekey, postkey, **kwargs):
-    	k = str(uuid.uuid4())
+        k = str(uuid.uuid4())
         s = Synapse(self._neurons[prekey], self._neurons[postkey], **kwargs)
         self._synapses[k] = (s, prekey, postkey)
         self.keyorder.append(k)
@@ -78,14 +106,19 @@ class Model(object):
         for syn, prekey, postkey in self._synapses.values():
             syn.step()
         if bufferize:
+            for rgbkey, idx in izip(self.keyorder, count()):
+                R, G, B = [self.find(k).lights() if k is not None else repeat(0) for k in rgbkey]
+                #print "%s" % [(r, g, b) for r, g, b in izip(R, G, B)]
+                self.buf.write("".join([chr(r) + chr(g) + chr(b) for r, g, b in izip(R, G, B)]))
+            self.buf.seek(0)
+        """
+        if bufferize:
             for k in self.keyorder:
-                if k in self._neurons:
-                    self._neurons[k].bufferize(self.buf)
-                elif k in self._synapses:
-                    self._synapses[k][0].bufferize(self.buf)
+                self.find(k).bufferize(self.buf)
             self.buf.flush()
             self.buf.truncate()
             self.buf.seek(0)
+        """
         return v
     def test(self, key):
         self.buf.seek(0)
@@ -122,22 +155,24 @@ class Synapse(object):
             self._values.popleft()
             self._values.append(self.pre.V)
         self._frame += 1
-
     def output(self):
         "Effect on postsynaptic current"
         return self._values[0] * self._weight
-
     def params(self):
-    	return {"weight": self._weight,
+        return {"weight": self._weight,
                 "reverse": self._reverse,
                 "nlights": self.nlights,
-    			"length": self._length,}
-
+                "length": self._length,}
+    def lights(self):
+        if self._reverse:
+            return [clamp(v)for v in reversed(self._values)]
+        else:
+            return [clamp(v)for v in self._values]
     def bufferize(self, buf):
         if self._reverse:
-            buf.write("".join(["\x00\x00" + clamp(v) for v in reversed(self._values)]))
+            buf.write("".join(["\x00\x00" + chr(clamp(v)) for v in reversed(self._values)]))
         else:
-            buf.write("".join(["\x00\x00" + clamp(v) for v in self._values]))
+            buf.write("".join(["\x00\x00" + chr(clamp(v)) for v in self._values]))
     def test(self, buf):
         if self._reverse:
             buf.write("".join(["\x00\x00\xFF" for v in reversed(self._values)]))
@@ -233,8 +268,10 @@ class Neuron(object):
             'I':        self._I
         }
 
+    def lights(self):
+        return [clamp(self.V)] * self.nlights
     def bufferize(self, buf):
-        buf.write(("\x00" + chr(int(max(0, min(self.V, 255)))) + "\x00") * self.nlights) #G
+        buf.write(("\x00" + chr(clamp(self.V)) + "\x00") * self.nlights) #G
     def test(self, buf):
         buf.write(("\x00\xFF\x00") * self.nlights) #G
     def blank(self, buf):
