@@ -18,7 +18,6 @@ void setup() {
     Serial.begin(9600);
     SerialUSB.begin(9600);
     memset(frame_buffer, 0, FB_SIZE);
-    SerialUSB.readBytes((char*)frame_buffer, FB_SIZE);
     FastLED.addLeds<WS2812B, PIN, RGB>(frame_buffer, NUM_LEDS);
     for (int i = 0; i < NUM_LEDS; i++) {
       float t = 16 * PI * i / NUM_LEDS;

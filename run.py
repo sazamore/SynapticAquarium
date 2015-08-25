@@ -12,6 +12,8 @@ import json
 import socket
 import serial
 import serial.tools.list_ports
+from math import sin, cos, pi
+from itertools import count
 gargs = None # Global arguments
 
 parser = argparse.ArgumentParser(description="Make the synaq go as fast as it can.")
@@ -24,6 +26,7 @@ parser.add_argument("-m", "--minlen", type=int, default=5, action="store", help=
 parser.add_argument("-t", "--time", type=float, default=None, action="store", metavar="S", help="How long to run the model")
 parser.add_argument("-b", "--baud", type=int, default=9600, action="store", metavar="baud", help="Baud rate to open serial port")
 parser.add_argument("--test", action="store_true", help="Display a test pattern.")
+parser.add_argument("--roll", action="store_true", help="Display a different test pattern.")
 mg = parser.add_mutually_exclusive_group()
 mg.add_argument("--output", type=argparse.FileType('w'), default=None, help="Stream model output to here")
 mg.add_argument("--udphost", type=str, default=None, 
@@ -54,8 +57,16 @@ host = None
 port = None
 serport = None
 
-def output(model):
-    data = model.buf.read()
+def fnv32a( val ): # yoinked from https://gist.github.com/vaiorabbit/5670985
+    hval = 0x811c9dc5
+    fnv_32_prime = 0x01000193
+    uint32_max = 2 ** 32
+    for s in val:
+        hval = hval ^ ord(s)
+        hval = (hval * fnv_32_prime) % uint32_max
+    return hval
+
+def output(data):
     #print "Outputting %d bytes" % len(data)
     #print repr(data)
     if gargs.output: # write to a file
@@ -65,13 +76,14 @@ def output(model):
         sock.sendto(data, (host, port))
     elif gargs.serial:
         serport.write(data)
-        """
-        resp = serport.read(9999)
-        if resp:
-            print repr(resp);
-        """
+        resp = serport.read(4)
+        resp = sum([ord(resp[i]) << (8 * i) for i in range(4)])
     else: # Don't bother reading
         model.buf.seek(0, io.SEEK_END)
+    checksum = fnv32a(data)
+    if checksum != resp:
+        print WhatTheFuck("checksum failure: %s != %s" % (checksum, resp))
+    #print checksum
 
 def bytestr(nbytes):
     if nbytes > 1024:
@@ -103,9 +115,9 @@ def main():
             print "Found serial port %s" % str(p)
             gargs.serial = p[0]
         if gargs.serial == 'auto':
-            raise WhatTheFuck("Serial autodetection failed. Am I plugged into the furthest port from the power jack on the ardweenoh?")
+            raise WhatTheFuck("Serial autodetection failed. \n\nAm I plugged into the furthest port from the power jack on the ardweenoh?")
     if gargs.serial:
-        serport = serial.Serial(port=gargs.serial, baudrate=gargs.baud, timeout=0)
+        serport = serial.Serial(port=gargs.serial, baudrate=gargs.baud, writeTimeout=None, timeout=None)
     stime = time.time() # start time
     nsteps = 0
     nbytes = 0
@@ -115,8 +127,25 @@ def main():
             for k in m.keyorder:
                 print "Testing %s" % k
                 m.test(k)
-                output(m)
+                output(m.buf.read())
                 time.sleep(1.5)
+    elif gargs.roll:
+        print "ROLLING"
+        m.step()
+        m.buf.read()
+        nbytes = m.buf.tell()
+        nlights = nbytes / 3
+        def meander(theta):
+            #return chr(random.randint(0,100))
+            return chr(int(max(0, sin(2*theta)*cos(theta)-.3)*100));
+        for frame in count():
+            data = "".join([meander(t) + 
+                            meander(t + pi / 3) + 
+                            meander(t + (2 * pi / 3)) 
+                            for t in 
+                                [pi / nlights * i * 16 + (frame / 10.) for i in range(nlights)]])
+            output(data)
+            
     else:
         print "RUNNING\n"
         outputtime = None # moving average of time to output 
@@ -131,7 +160,7 @@ def main():
                 for _ in xrange(10):
                     m.step(bufferize=False)
                 obegin = time.clock()
-                output(m)
+                output(m.buf.read())
                 oend = time.clock()
 
                 sbytes = m.buf.tell()
@@ -147,7 +176,7 @@ def main():
                 outputtime = outputtime * 0.95 + (oend - obegin) * 0.05
                 simtime = simtime * 0.95 + (obegin - sbegin) * 0.05
                 obps = obps * 0.95 + (sbytes / (oend - obegin)) 
-                if nsteps % 20 == 0:
+                if nsteps % 50 == 0:
                     print "\rSim: %f%%\tOutput: %f%%\t%s/sec" % ((simtime) / (simtime + outputtime), (outputtime) / (simtime + outputtime), bytestr(obps))
         except KeyboardInterrupt:
             print "Keyboard interrupt. Exiting";
@@ -162,4 +191,11 @@ def main():
       "%s/sec, %f frames/sec" % 
       (m.buf.tell() / 3, nsteps, nbytes, ttime, bytestr(bps), nsteps / ttime))
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        raise
+    except:
+        print "\n\nACHTUNG! An exception occurd. Pausing 15 seconds so you can read it:"
+        traceback.print_exc();
+        time.sleep(15)
