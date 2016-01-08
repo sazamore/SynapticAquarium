@@ -122,7 +122,10 @@ class Model(object):
         return v
     def test(self, key):
         self.buf.seek(0)
+        key = filter(lambda x: x, key)[0]
+        print key
         for k in self.keyorder:
+            k = filter(lambda x: x, k)[0]
             if k == key:
                 print "Found %s" % k
                 if k in self._neurons:

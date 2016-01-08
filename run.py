@@ -128,7 +128,7 @@ def main():
                 print "Testing %s" % k
                 m.test(k)
                 output(m.buf.read())
-                time.sleep(1.5)
+                time.sleep(0.5)
     elif gargs.roll:
         print "ROLLING"
         m.step()
